@@ -1,0 +1,26 @@
+0
+session_duration_sec
+event_velocity
+cart_to_view_ratio
+click_to_view_ratio
+age
+expected_uplift
+loyalty_tier_Gold
+loyalty_tier_Platinum
+loyalty_tier_Silver
+acquisition_channel_Organic
+acquisition_channel_Paid Search
+acquisition_channel_Referral
+acquisition_channel_Social
+device_type_desktop
+device_type_mobile
+device_type_tablet
+channel_Affiliate
+channel_Display
+channel_Email
+channel_Paid Search
+channel_Social
+objective_Acquisition
+objective_Cross-sell
+objective_Reactivation
+objective_Retention
