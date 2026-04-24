@@ -2,8 +2,8 @@
 
 ### GA4-Aligned Session Scoring & Revenue Opportunity Framework
 
-**Author:** Troy Dela Rosa
-**Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Matplotlib · Seaborn · Jupyter  
+**Author:** Troy Dela Rosa  
+**Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Jupyter  
 **Focus:** Ecommerce Analytics · Conversion Propensity · Revenue Forecasting
 
 ---
