@@ -3,7 +3,7 @@
 ### GA4-Aligned Session Scoring & Revenue Opportunity Framework
 
 **Author:** Troy Dela Rosa  
-**Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Jupyter  
+**Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Matplotlib · Seaborn · Jupyter  
 **Focus:** Ecommerce Analytics · Conversion Propensity · Revenue Forecasting
 
 ---
@@ -133,6 +133,10 @@ Business Actions
 | **At-Risk** | 40–70% | Trigger incentive / recover demand |
 | **Low Interest** | < 40% | Reduce spend / suppress remarketing |
 
+![Revenue Opportunity by Segment](visualizations/revenue_opportunity.png)
+
+*Distribution of expected revenue across the three propensity segments. The at-risk band is where targeted intervention recovers the most incremental revenue without eroding margin on captive demand.*
+
 ---
 
 ## GA4 Alignment
@@ -165,6 +169,8 @@ While not run on a live GA4 property, the pipeline was designed to be transferab
 
 Please refer to the Kaggle page for the dataset's license and any usage restrictions.
 
+> **Note on data files:** The dataset is too large to upload to this repository. To reproduce the analysis, download the files from the Kaggle link above and place them in `data/raw/` alongside the notebook. Processed files in `data/processed/` are regenerated automatically when the notebook runs.
+
 ---
 
 ## Key Results
@@ -174,6 +180,10 @@ Please refer to the Kaggle page for the dataset's license and any usage restrict
 - Revenue opportunity segmentation identified actionable at-risk demand
 - Behavioural signals predicted intent better than spend magnitude
 - Historical customer-value features improved revenue estimation significantly
+
+![Propensity Decile Lift](visualizations/propensity_decile.png)
+
+*Actual conversion rate by predicted-probability decile. Decile 1 (highest-scored sessions) converts at roughly 3× the base rate — the ranking quality that makes targeted intervention economically viable.*
 
 ---
 
@@ -193,12 +203,3 @@ Please refer to the Kaggle page for the dataset's license and any usage restrict
 This repository is a portfolio-enhanced version of the **Predictive Funnel Analytics (PFA)** project originally developed for the **Supervised Machine Learning (SML)** course in the **Data Science & Machine Learning** program at **Red River College Polytechnic**.
 
 The original academic version focused on model training and evaluation. This version reframes the work as a GA4-aligned ecommerce analytics case study to support stakeholder decision-making.
-
----
-
-## How to Run
-
-1. Clone repository  
-2. Install requirements  
-3. Open notebook  
-4. Run cells
