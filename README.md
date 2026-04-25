@@ -187,6 +187,20 @@ Please refer to the Kaggle page for the dataset's license and any usage restrict
 
 ---
 
+## Revenue Reconciliation
+
+After probability calibration, the model produced the following test-set revenue estimate:
+
+| Metric | Value |
+|---|---:|
+| Expected revenue (calibrated) | $1,972,962.80 |
+| Actual revenue | $1,739,605.48 |
+| Variance | +$233,357.32 |
+| Variance (%) | +13.4% |
+
+Calibration corrected the model’s overconfident raw probability estimates. The calibrated model remains useful for ranking, targeting, and estimating revenue opportunity, but revenue values should be treated as planning estimates rather than guaranteed outcomes.
+
+---
 ## Core Insight
 
 > **Clicks signal intent — not wallet.**
