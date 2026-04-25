@@ -147,6 +147,15 @@ While not run on a live GA4 property, the workflow was designed to transfer to G
 - Revenue fields  
 - Leakage safeguards  
 
+### Production Considerations for Live GA4 Data
+
+In live GA4 environments, additional validation would be required for:
+
+- **Session fragmentation:** confirm session boundaries affected by inactivity windows, campaign resets, and cross-device behavior  
+- **Event duplication:** audit duplicate events and validate deduplication logic using event/user keys  
+- **Attribution windows:** align conversion timing and revenue crediting with GA4 attribution settings  
+- **Identity stitching:** validate consistency between `user_pseudo_id` and optional User-ID implementations
+
 ---
 
 ## Dataset
