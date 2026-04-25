@@ -10,6 +10,16 @@
 
 ---
 
+## Key Results Snapshot
+
+- **ROC-AUC:** ~0.80 on held-out test set  
+- **Top-decile lift:** ~3× base conversion rate  
+- **Revenue forecast:** $1.97M expected vs $1.74M actual after calibration  
+- **Variance:** +13.4% (directionally useful planning estimate)  
+- **Business use case:** session prioritization, promotions, bidding, merchandising
+
+---
+
 ## What This Project Does
 
 This project builds a two-stage session scoring system designed to assign a **probability of conversion** and **expected revenue value** to each user session.
