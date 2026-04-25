@@ -16,7 +16,7 @@
 - **Top-decile lift:** ~3× base conversion rate  
 - **Revenue forecast:** $1.97M expected vs $1.74M actual after calibration  
 - **Variance:** +13.4% (directionally useful planning estimate)  
-- **Business use case:** session prioritization, promotions, bidding, merchandising
+- **Business use case:** promotions, bidding, merchandising, funnel prioritization  
 
 ---
 
@@ -26,10 +26,12 @@ This project builds a two-stage session scoring system designed to assign a **pr
 
 The framework enables:
 
-- Identification of high-value users before they convert
-- Targeted intervention on at-risk sessions
-- Smarter allocation of marketing spend and promotions
-- Revenue-based prioritization instead of conversion-only metrics
+- Identification of high-value users before they convert  
+- Targeted intervention on at-risk sessions  
+- Smarter allocation of marketing spend and promotions  
+- Revenue-based prioritization with margin-aware decisioning  
+
+The notebook includes full model diagnostics, calibration checks, feature analysis, and implementation details.
 
 ---
 
@@ -37,7 +39,7 @@ The framework enables:
 
 > **Expected Revenue = P(Convert) × Expected Spend**
 
-Instead of treating all sessions equally, this model estimates **how much each session may be worth**.
+Instead of treating all sessions equally, this framework estimates **how much each session may be worth**.
 
 ---
 
@@ -45,14 +47,14 @@ Instead of treating all sessions equally, this model estimates **how much each s
 
 In typical ecommerce funnels, most sessions do not convert. This creates two costly problems:
 
-- High-intent users may drop off without intervention
-- Low-value traffic can consume marketing budget
+- High-intent users may drop off without intervention  
+- Low-value traffic can consume marketing budget  
 
 This project addresses both by identifying:
 
-- **Who is likely to convert**
-- **Who may need a nudge**
-- **Who is not worth targeting heavily**
+- **Who is likely to convert**  
+- **Who may need a nudge**  
+- **Who is not worth targeting heavily**  
 
 ---
 
@@ -60,68 +62,46 @@ This project addresses both by identifying:
 
 ### Stage 1 — Conversion Propensity
 
-- **Model:** XGBoost Classifier
-- **Output:** Probability of purchase
-- **Performance:** ROC-AUC ≈ 0.80 with strong ranking lift
+- **Model:** XGBoost Classifier  
+- **Output:** Probability of purchase  
+- **Performance:** ROC-AUC ≈ 0.80 with strong ranking lift  
 
 ### Stage 2 — Spend Estimation
 
-- **Method:** Historical customer average order value lookup
-- **Insight:** Behaviour predicts intent, not spend
+- **Method:** Baseline historical AOV lookup  
+- **Design Choice:** Intentionally simple for interpretability and modular extension to regression-based spend modeling  
+- **Insight:** Behaviour predicts intent more reliably than spend magnitude  
 
 ### Final Output
 
-- Session-level expected revenue
-- Actionable segmentation for marketing, pricing, and merchandising
+- Session-level expected revenue  
+- Actionable segmentation for marketing, pricing, and merchandising  
 
 ---
 
-## Architecture Overview
+## Revenue Reconciliation
 
-```text
-Raw Event Data (GA4-style)
-        │
-        ▼
-Session Aggregation Layer
-(events → sessions)
-        │
-        ▼
-Feature Engineering
-- Behavioural signals
-- Customer attributes
-- Campaign context
-        │
-        ▼
------------------------------
-|   Stage 1: Propensity     |
-|   XGBoost Classifier      |
-|   P(Convert)              |
------------------------------
-        │
-        ▼
------------------------------
-|   Stage 2: Spend Model    |
-|   Historical AOV Lookup   |
-|   Expected Spend          |
------------------------------
-        │
-        ▼
-Expected Revenue Calculation
-P(Convert) × Expected Spend
-        │
-        ▼
-Segmentation Layer
-- High Certainty
-- At-Risk
-- Low Interest
-        │
-        ▼
-Business Actions
-- Promotions
-- Bidding
-- Merchandising
-- Funnel Optimization
-```
+After probability calibration, the model produced the following held-out test-set estimate:
+
+| Metric | Value |
+|---|---:|
+| Expected revenue (calibrated) | $1,972,962.80 |
+| Actual revenue | $1,739,605.48 |
+| Variance | +$233,357.32 |
+| Variance (%) | +13.4% |
+
+Calibration corrected overconfidence in the raw probabilities while preserving ranking performance. Revenue outputs should be interpreted as **planning estimates**, not guaranteed realized outcomes.
+
+---
+
+## Business Interpretation
+
+- Strong enough for session ranking and prioritization  
+- Useful for promotion targeting and budget allocation  
+- Revenue estimates are directionally informative  
+- Spend layer can be upgraded independently without rebuilding the full pipeline  
+
+> **Note:** Propensity scores estimate likelihood of purchase, not incremental treatment effect. In production, experimentation or uplift modeling would strengthen intervention decisions.
 
 ---
 
@@ -133,7 +113,7 @@ Business Actions
 | S-21984 | 0.58 | $96.20 | $55.80 | At-Risk | Trigger incentive |
 | S-33871 | 0.12 | $42.00 | $5.04 | Low Interest | Suppress remarketing |
 
-*Values shown are illustrative and meant to demonstrate the hurdle formula in action. Actual scores are generated per session at inference time.*
+*Illustrative values used to demonstrate the hurdle framework. Actual scores are generated at inference time.*
 
 ---
 
@@ -141,19 +121,15 @@ Business Actions
 
 | Segment | Probability | Recommended Action |
 |---|---|---|
-| **High-Certainty** | > 80% | Protect margin / no discount |
+| **High-Certainty** | >80% | Protect margin / no discount |
 | **At-Risk** | 40–70% | Trigger incentive / recover demand |
-| **Low Interest** | < 40% | Reduce spend / suppress remarketing |
-
-![Revenue Opportunity by Segment](visualizations/revenue_opportunity.png)
-
-*Distribution of expected revenue across the three propensity segments. The at-risk band is where targeted intervention recovers the most incremental revenue without eroding margin on captive demand.*
+| **Low Interest** | <40% | Reduce spend / suppress remarketing |
 
 ---
 
 ## GA4 Alignment
 
-This project was structured to approximate a **Google Analytics 4 BigQuery export workflow**.
+This project was structured to approximate a Google Analytics 4 BigQuery export workflow.
 
 | Project Field | Comparable GA4 Field |
 |---|---|
@@ -163,69 +139,40 @@ This project was structured to approximate a **Google Analytics 4 BigQuery expor
 | `session_id` | `ga_session_id` |
 | `purchase_amount` | `ecommerce.purchase_revenue` |
 
-While not run on a live GA4 property, the pipeline was designed to be transferable to GA4-style event data after validating event quality, session logic, identity stitching, revenue fields, and leakage safeguards.
+While not run on a live GA4 property, the workflow was designed to transfer to GA4-style event data after validating:
+
+- Event quality  
+- Session logic  
+- Identity stitching  
+- Revenue fields  
+- Leakage safeguards  
 
 ---
 
 ## Dataset
 
-**Source:** [Marketing & E-Commerce Analytics Dataset](https://www.kaggle.com/datasets/geethasagarbonthu/marketing-and-e-commerce-analytics-dataset) by Geetha Sagar Bonthu (Kaggle)
+**Source:** Marketing & E-Commerce Analytics Dataset (Kaggle)  
 
-**Type:** Synthetic — the dataset is not sourced from a live GA4 property. Its event-based structure was adapted into a GA4-aligned workflow to approximate how session-level funnel modelling could be applied to real GA4 BigQuery export data.
+- ~100,000 customers  
+- 2M+ interaction events  
+- 5 relational tables: customers, campaigns, events, products, transactions  
 
-**Scale:**
-
-- ~100,000 customers
-- 2M+ interaction events
-- 5 relational tables: `customers`, `campaigns`, `events`, `products`, `transactions`
-
-Please refer to the Kaggle page for the dataset's license and any usage restrictions.
-
-> **Note on data files:** The dataset is too large to upload to this repository. To reproduce the analysis, download the files from the Kaggle link above and place them in `data/raw/` alongside the notebook. Processed files in `data/processed/` are regenerated automatically when the notebook runs.
+**Note:** Data files are excluded from the repository due to size. Download from Kaggle and place in `data/raw/`. Processed files regenerate through the notebook pipeline.
 
 ---
 
-## Key Results
-
-- **ROC-AUC ≈ 0.80** on the held-out test set
-- Strong top-decile lift vs random targeting
-- Revenue opportunity segmentation identified actionable at-risk demand
-- Behavioural signals predicted intent better than spend magnitude
-- Historical customer-value features improved revenue estimation significantly
-
-![Propensity Decile Lift](visualizations/propensity_decile.png)
-
-*Actual conversion rate by predicted-probability decile. Decile 1 (highest-scored sessions) converts at roughly 3× the base rate — the ranking quality that makes targeted intervention economically viable.*
-
----
-
-## Revenue Reconciliation
-
-After probability calibration, the model produced the following test-set revenue estimate:
-
-| Metric | Value |
-|---|---:|
-| Expected revenue (calibrated) | $1,972,962.80 |
-| Actual revenue | $1,739,605.48 |
-| Variance | +$233,357.32 |
-| Variance (%) | +13.4% |
-
-Calibration corrected the model’s overconfident raw probability estimates. The calibrated model remains useful for ranking, targeting, and estimating revenue opportunity, but revenue values should be treated as planning estimates rather than guaranteed outcomes.
-
----
 ## Core Insight
 
-> **Clicks signal intent — not wallet.**
->
-> Session behavior helps predict *whether* someone buys.
+> **Clicks signal intent — not wallet.**  
+> Session behaviour helps predict *whether* someone buys.  
 > Customer history helps predict *how much* they spend.
->
-> That distinction is critical for pricing, bidding, and promotional efficiency.
+
+That distinction is critical for pricing, bidding, and promotional efficiency.
 
 ---
 
 ## Project Origin
 
-This repository is a portfolio-enhanced version of the **Predictive Funnel Analytics (PFA)** project originally developed for the **Supervised Machine Learning (SML)** course in the **Data Science & Machine Learning** program at **Red River College Polytechnic**.
+This repository is a portfolio-enhanced version of the Predictive Funnel Analytics project originally developed for the Supervised Machine Learning course in the Data Science & Machine Learning program at Red River College Polytechnic.
 
-The original academic version focused on model training and evaluation. This version reframes the work as a GA4-aligned ecommerce analytics case study to support stakeholder decision-making.
+The academic version focused on model development and evaluation. This version reframes the work as a business-facing GA4-aligned ecommerce analytics case study.
