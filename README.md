@@ -1,3 +1,5 @@
+![Predictive Funnel Analytics Banner](visualizations/header.png)
+
 # Predictive Funnel Analytics (PFA-GA4)
 
 ### GA4-Aligned Session Scoring & Revenue Opportunity Framework
