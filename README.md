@@ -1,8 +1,7 @@
 ![Predictive Funnel Analytics Banner](visualizations/header.png)
-
 # Predictive Funnel Analytics (PFA-GA4)
 
-### GA4 Aligned Session Scoring & Revenue Opportunity Framework
+### GA4-Aligned Session Scoring & Revenue Opportunity Framework
 
 **Author:** Troy Dela Rosa  
 **Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Matplotlib · Seaborn · Jupyter  
@@ -16,10 +15,12 @@ This project answers a core ecommerce question:
 
 > **Which user sessions should we prioritize to maximize expected revenue without eroding margin?**
 
-Using a two stage modeling framework, sessions are scored by conversion likelihood and expected spend, enabling targeted promotion, bidding, and merchandising decisions.
+Using a two-stage modeling framework, sessions are scored by conversion likelihood and expected spend, enabling targeted promotion, bidding, and merchandising decisions.
 
 **Key outcome:**  
-High scoring sessions in the top decile convert at approximately **3x the baseline rate**, enabling more efficient prioritization of revenue generating traffic.
+High-scoring sessions in the top decile convert at approximately **3x the baseline rate**, enabling more efficient prioritization of revenue-generating traffic.
+
+Evaluation was performed on a held-out test split of simulated ecommerce sessions.
 
 ---
 
@@ -35,17 +36,17 @@ High scoring sessions in the top decile convert at approximately **3x the baseli
 
 ## What This Project Does
 
-This project builds a two stage session scoring system that assigns:
+This project builds a two-stage session scoring system that assigns:
 
 - Probability of conversion
 - Expected revenue value per session
 
 This enables:
 
-- Identification of high value users before purchase
-- Targeted intervention on potentially recoverable mid propensity sessions
+- Identification of high-value users before purchase
+- Targeted intervention on potentially recoverable mid-propensity sessions
 - Smarter allocation of marketing spend
-- Revenue based prioritization with margin aware decisioning
+- Revenue-based prioritization with margin-aware decisioning
 
 The notebook includes full model diagnostics, calibration analysis, feature importance, and implementation details.
 
@@ -68,8 +69,8 @@ In most ecommerce funnels:
 
 This leads to:
 
-- Missed high intent opportunities
-- Overspending on low value traffic
+- Missed high-intent opportunities
+- Overspending on low-value traffic
 
 This framework identifies:
 
@@ -90,12 +91,12 @@ This framework identifies:
 ### Stage 2: Spend Estimation
 
 - **Method:** Baseline historical AOV lookup
-- **Design choice:** Intentionally simple to isolate propensity signal and allow modular extension to regression based spend models
+- **Design choice:** Intentionally simple to isolate propensity signal and allow modular extension to regression-based spend models
 - **Insight:** Behaviour predicts intent more reliably than spend magnitude
 
 ### Final Output
 
-- Session level expected revenue
+- Session-level expected revenue
 - Actionable segmentation for marketing and pricing decisions
 
 ---
@@ -109,7 +110,7 @@ After probability calibration, the model produced the following held-out estimat
 | Expected revenue (calibrated) | $1,972,962.80 |
 | Actual revenue | $1,739,605.48 |
 | Overestimation | +$233,357.32 |
-| Overestimation (%) | +13.4% |
+| Overestimation bias (%) | +13.4% |
 
 Calibration reduced overconfidence in predicted probabilities while preserving ranking performance. Revenue outputs should be interpreted as planning estimates, not guaranteed outcomes.
 
@@ -117,10 +118,11 @@ Calibration reduced overconfidence in predicted probabilities while preserving r
 
 ## Business Interpretation
 
-- Useful for relative ranking and resource allocation decisions
-- Most effective when used to prioritize mid propensity sessions
+- Useful for ranking sessions and allocating marketing resources under budget constraints
+- Most effective when used to prioritize mid-propensity sessions
 - Enables more efficient promotion targeting and budget allocation
 - Spend model can be upgraded independently without retraining the full system
+- Best used as a prioritization layer within a broader experimentation framework rather than a standalone decision engine
 
 > **Important:** Propensity scores estimate likelihood of purchase, not incremental treatment effect. In production, A/B testing or uplift modeling should be used to measure true intervention impact.
 
@@ -160,7 +162,7 @@ The dataset consists of five relational tables:
 - `products`: one row per product with metadata
 - `campaigns`: marketing campaign attributes
 
-Sessions were constructed by aggregating event level data into session level features aligned with GA4 style sessionization logic.
+Sessions were constructed by aggregating event-level data into session-level features aligned with GA4-style sessionization logic.
 
 ---
 
@@ -190,7 +192,7 @@ While not run on a live GA4 property, the workflow was designed for transferabil
 
 In live GA4 data, additional validation would be required for:
 
-- Session fragmentation from timeouts, campaign resets, and cross device behavior
+- Session fragmentation from timeouts, campaign resets, and cross-device behavior
 - Event duplication and deduplication logic
 - Attribution windows and revenue crediting
 - Identity stitching across devices and identifiers
@@ -205,7 +207,7 @@ In live GA4 data, additional validation would be required for:
 - 2M+ interaction events
 - 5 relational tables
 
-**Note:** This is a synthetic dataset and does not reflect all real world tracking noise, such as missing events, attribution ambiguity, or inconsistent identity stitching. Results may differ in production environments.
+**Note:** This is a synthetic dataset and does not reflect all real-world tracking noise, such as missing events, attribution ambiguity, or inconsistent identity stitching. Results may differ in production environments.
 
 ---
 
@@ -222,4 +224,4 @@ Separating these signals improves targeting efficiency, pricing strategy, and ma
 
 ## Project Origin
 
-This project originated from coursework in the Data Science & Machine Learning program at Red River College Polytechnic and was expanded into a business focused analytics case study.
+This project originated from coursework in the Data Science & Machine Learning program at Red River College Polytechnic and was expanded into a business-focused analytics case study.
