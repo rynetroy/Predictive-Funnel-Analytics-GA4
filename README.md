@@ -2,7 +2,7 @@
 
 # Predictive Funnel Analytics (PFA-GA4)
 
-### GA4-Aligned Session Scoring & Revenue Opportunity Framework
+### GA4 Aligned Session Scoring & Revenue Opportunity Framework
 
 **Author:** Troy Dela Rosa  
 **Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · Matplotlib · Seaborn · Jupyter  
@@ -10,98 +10,119 @@
 
 ---
 
+## Executive Summary
+
+This project answers a core ecommerce question:
+
+> **Which user sessions should we prioritize to maximize expected revenue without eroding margin?**
+
+Using a two stage modeling framework, sessions are scored by conversion likelihood and expected spend, enabling targeted promotion, bidding, and merchandising decisions.
+
+**Key outcome:**  
+High scoring sessions in the top decile convert at approximately **3x the baseline rate**, enabling more efficient prioritization of revenue generating traffic.
+
+---
+
 ## Key Results Snapshot
 
-- **ROC-AUC:** ~0.80 on held-out test set  
-- **Top-decile lift:** ~3× base conversion rate  
-- **Revenue forecast:** $1.97M expected vs $1.74M actual after calibration  
-- **Variance:** +13.4% (directionally useful planning estimate)  
-- **Business use case:** promotions, bidding, merchandising, funnel prioritization  
+- **ROC-AUC:** 0.80 on held-out test set
+- **Top-decile lift:** 3x base conversion rate
+- **Revenue forecast:** $1.97M expected vs $1.74M actual after calibration
+- **Overestimation bias:** +13.4% post-calibration
+- **Primary use cases:** promotion targeting, paid media bidding, merchandising prioritization
 
 ---
 
 ## What This Project Does
 
-This project builds a two-stage session scoring system designed to assign a **probability of conversion** and **expected revenue value** to each user session.
+This project builds a two stage session scoring system that assigns:
 
-The framework enables:
+- Probability of conversion
+- Expected revenue value per session
 
-- Identification of high-value users before they convert  
-- Targeted intervention on at-risk sessions  
-- Smarter allocation of marketing spend and promotions  
-- Revenue-based prioritization with margin-aware decisioning  
+This enables:
 
-The notebook includes full model diagnostics, calibration checks, feature analysis, and implementation details.
+- Identification of high value users before purchase
+- Targeted intervention on potentially recoverable mid propensity sessions
+- Smarter allocation of marketing spend
+- Revenue based prioritization with margin aware decisioning
+
+The notebook includes full model diagnostics, calibration analysis, feature importance, and implementation details.
 
 ---
 
 ## Key Idea
 
-> **Expected Revenue = P(Convert) × Expected Spend**
+> **Expected Revenue = P(Convert) x Expected Spend**
 
-Instead of treating all sessions equally, this framework estimates **how much each session may be worth**.
+Rather than optimizing for conversion rate alone, this framework estimates economic value per session.
 
 ---
 
 ## Why It Matters
 
-In typical ecommerce funnels, most sessions do not convert. This creates two costly problems:
+In most ecommerce funnels:
 
-- High-intent users may drop off without intervention  
-- Low-value traffic can consume marketing budget  
+- The majority of sessions do not convert
+- Marketing spend is often applied uniformly
 
-This project addresses both by identifying:
+This leads to:
 
-- **Who is likely to convert**  
-- **Who may need a nudge**  
-- **Who is not worth targeting heavily**  
+- Missed high intent opportunities
+- Overspending on low value traffic
+
+This framework identifies:
+
+- **Who is likely to convert**
+- **Who is potentially persuadable with intervention**
+- **Who is unlikely to justify spend**
 
 ---
 
 ## Approach
 
-### Stage 1 — Conversion Propensity
+### Stage 1: Conversion Propensity
 
-- **Model:** XGBoost Classifier  
-- **Output:** Probability of purchase  
-- **Performance:** ROC-AUC ≈ 0.80 with strong ranking lift  
+- **Model:** XGBoost Classifier
+- **Output:** Probability of purchase
+- **Performance:** ROC-AUC 0.80 with strong ranking lift
 
-### Stage 2 — Spend Estimation
+### Stage 2: Spend Estimation
 
-- **Method:** Baseline historical AOV lookup  
-- **Design Choice:** Intentionally simple for interpretability and modular extension to regression-based spend modeling  
-- **Insight:** Behaviour predicts intent more reliably than spend magnitude  
+- **Method:** Baseline historical AOV lookup
+- **Design choice:** Intentionally simple to isolate propensity signal and allow modular extension to regression based spend models
+- **Insight:** Behaviour predicts intent more reliably than spend magnitude
 
 ### Final Output
 
-- Session-level expected revenue  
-- Actionable segmentation for marketing, pricing, and merchandising  
+- Session level expected revenue
+- Actionable segmentation for marketing and pricing decisions
 
 ---
 
 ## Revenue Reconciliation
 
-After probability calibration, the model produced the following held-out test-set estimate:
+After probability calibration, the model produced the following held-out estimate:
 
 | Metric | Value |
 |---|---:|
 | Expected revenue (calibrated) | $1,972,962.80 |
 | Actual revenue | $1,739,605.48 |
-| Variance | +$233,357.32 |
-| Variance (%) | +13.4% |
+| Overestimation | +$233,357.32 |
+| Overestimation (%) | +13.4% |
 
-Calibration corrected overconfidence in the raw probabilities while preserving ranking performance. Revenue outputs should be interpreted as **planning estimates**, not guaranteed realized outcomes.
+Calibration reduced overconfidence in predicted probabilities while preserving ranking performance. Revenue outputs should be interpreted as planning estimates, not guaranteed outcomes.
 
 ---
 
 ## Business Interpretation
 
-- Strong enough for session ranking and prioritization  
-- Useful for promotion targeting and budget allocation  
-- Revenue estimates are directionally informative  
-- Spend layer can be upgraded independently without rebuilding the full pipeline  
+- Useful for relative ranking and resource allocation decisions
+- Most effective when used to prioritize mid propensity sessions
+- Enables more efficient promotion targeting and budget allocation
+- Spend model can be upgraded independently without retraining the full system
 
-> **Note:** Propensity scores estimate likelihood of purchase, not incremental treatment effect. In production, experimentation or uplift modeling would strengthen intervention decisions.
+> **Important:** Propensity scores estimate likelihood of purchase, not incremental treatment effect. In production, A/B testing or uplift modeling should be used to measure true intervention impact.
 
 ---
 
@@ -109,11 +130,11 @@ Calibration corrected overconfidence in the raw probabilities while preserving r
 
 | Session ID | P(Convert) | Expected Spend | Expected Revenue | Segment | Recommended Action |
 |---|---:|---:|---:|---|---|
-| S-10492 | 0.86 | $124.50 | $107.07 | High-Certainty | Protect margin |
-| S-21984 | 0.58 | $96.20 | $55.80 | At-Risk | Trigger incentive |
-| S-33871 | 0.12 | $42.00 | $5.04 | Low Interest | Suppress remarketing |
+| S-10492 | 0.86 | $124.50 | $107.07 | High Certainty | Avoid discounting; likely to convert anyway |
+| S-21984 | 0.58 | $96.20 | $55.80 | At Risk | Apply targeted incentive, such as 10 to 15% discount or free shipping |
+| S-33871 | 0.12 | $42.00 | $5.04 | Low Interest | Suppress paid remarketing to reduce wasted spend |
 
-*Illustrative values used to demonstrate the hurdle framework. Actual scores are generated at inference time.*
+*Illustrative values used to demonstrate the framework.*
 
 ---
 
@@ -121,15 +142,31 @@ Calibration corrected overconfidence in the raw probabilities while preserving r
 
 | Segment | Probability | Recommended Action |
 |---|---|---|
-| **High-Certainty** | >80% | Protect margin / no discount |
-| **At-Risk** | 40–70% | Trigger incentive / recover demand |
+| **High Certainty** | >80% | Protect margin / avoid unnecessary incentives |
+| **At Risk** | 40 to 70% | Apply targeted incentives to recover demand |
 | **Low Interest** | <40% | Reduce spend / suppress remarketing |
+
+*Thresholds are heuristic and can be tuned based on margin sensitivity, campaign cost, and business constraints.*
+
+---
+
+## Data Structure
+
+The dataset consists of five relational tables:
+
+- `customers`: one row per user
+- `events`: one row per interaction, such as clicks or views
+- `transactions`: one row per completed purchase
+- `products`: one row per product with metadata
+- `campaigns`: marketing campaign attributes
+
+Sessions were constructed by aggregating event level data into session level features aligned with GA4 style sessionization logic.
 
 ---
 
 ## GA4 Alignment
 
-This project was structured to approximate a Google Analytics 4 BigQuery export workflow.
+This project was designed to approximate a Google Analytics 4 BigQuery export workflow.
 
 | Project Field | Comparable GA4 Field |
 |---|---|
@@ -139,49 +176,50 @@ This project was structured to approximate a Google Analytics 4 BigQuery export 
 | `session_id` | `ga_session_id` |
 | `purchase_amount` | `ecommerce.purchase_revenue` |
 
-While not run on a live GA4 property, the workflow was designed to transfer to GA4-style event data after validating:
+While not run on a live GA4 property, the workflow was designed for transferability after validating:
 
-- Event quality  
-- Session logic  
-- Identity stitching  
-- Revenue fields  
-- Leakage safeguards  
+- Event quality
+- Session logic
+- Identity stitching
+- Revenue attribution
+- Leakage safeguards
 
-### Production Considerations for Live GA4 Data
+---
 
-In live GA4 environments, additional validation would be required for:
+## Production Considerations
 
-- **Session fragmentation:** confirm session boundaries affected by inactivity windows, campaign resets, and cross-device behavior  
-- **Event duplication:** audit duplicate events and validate deduplication logic using event/user keys  
-- **Attribution windows:** align conversion timing and revenue crediting with GA4 attribution settings  
-- **Identity stitching:** validate consistency between `user_pseudo_id` and optional User-ID implementations
+In live GA4 data, additional validation would be required for:
+
+- Session fragmentation from timeouts, campaign resets, and cross device behavior
+- Event duplication and deduplication logic
+- Attribution windows and revenue crediting
+- Identity stitching across devices and identifiers
 
 ---
 
 ## Dataset
 
-**Source:** Marketing & E-Commerce Analytics Dataset (Kaggle)  
+**Source:** Marketing & E-Commerce Analytics Dataset from Kaggle
 
-- ~100,000 customers  
-- 2M+ interaction events  
-- 5 relational tables: customers, campaigns, events, products, transactions  
+- 100,000 customers
+- 2M+ interaction events
+- 5 relational tables
 
-**Note:** Data files are excluded from the repository due to size. Download from Kaggle and place in `data/raw/`. Processed files regenerate through the notebook pipeline.
+**Note:** This is a synthetic dataset and does not reflect all real world tracking noise, such as missing events, attribution ambiguity, or inconsistent identity stitching. Results may differ in production environments.
 
 ---
 
 ## Core Insight
 
-> **Clicks signal intent — not wallet.**  
-> Session behaviour helps predict *whether* someone buys.  
-> Customer history helps predict *how much* they spend.
+> **Clicks signal intent, not wallet.**
 
-That distinction is critical for pricing, bidding, and promotional efficiency.
+Session behaviour predicts **whether** a user will buy.  
+Customer history predicts **how much** they will spend.
+
+Separating these signals improves targeting efficiency, pricing strategy, and marketing ROI.
 
 ---
 
 ## Project Origin
 
-This repository is a portfolio-enhanced version of the Predictive Funnel Analytics project originally developed for the Supervised Machine Learning course in the Data Science & Machine Learning program at Red River College Polytechnic.
-
-The academic version focused on model development and evaluation. This version reframes the work as a business-facing GA4-aligned ecommerce analytics case study.
+This project originated from coursework in the Data Science & Machine Learning program at Red River College Polytechnic and was expanded into a business focused analytics case study.
