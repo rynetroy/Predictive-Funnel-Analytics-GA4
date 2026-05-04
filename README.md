@@ -4,210 +4,208 @@
 
 ### GA4-Aligned Session Scoring & Revenue Opportunity Framework
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue) ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange) ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-yellow) ![Status](https://img.shields.io/badge/Project-Completed-green)
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-yellow)
+![Status](https://img.shields.io/badge/Project-Completed-green)
 
 **Author:** Troy Dela Rosa  
 **Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · SHAP · Matplotlib · Seaborn · Jupyter  
-**Focus:** Ecommerce Analytics · Conversion Propensity · Revenue Forecasting
+**Focus:** Ecommerce Analytics · Conversion Propensity · Revenue Forecasting · Promotion Targeting
 
 ---
 
 ## Executive Summary
 
-This project answers a core ecommerce question:
+This project answers a practical ecommerce question:
 
-> **Which user sessions should we prioritize to maximize expected revenue while reducing unnecessary discounting?**
+> **Which user sessions should we prioritize for marketing intervention without wasting discounts on users who would likely convert anyway?**
 
-Using a two-stage modeling framework, sessions are scored by conversion likelihood and predicted spend, enabling more targeted promotion, bidding, and merchandising decisions.
+Using a two-stage predictive funnel framework, the project scores sessions by:
 
-**Key outcome:**  
-High-scoring sessions in the top decile converted at approximately **3x the baseline rate**, showing that the model can rank revenue-generating traffic more effectively than random targeting.
+1. **Conversion probability** — how likely a session is to result in a purchase  
+2. **Predicted spend** — how much the user is expected to spend if they convert  
+3. **Expected revenue** — the combined business value of the session  
 
-Evaluation was performed on a held-out test split of simulated ecommerce sessions.
+The final model ranked sessions effectively on a held-out test set. Sessions in the top decile converted at approximately **3x the baseline conversion rate**, showing that the model can prioritize higher-intent traffic better than random targeting.
 
----
-
-## Key Results Snapshot
-
-- **Test ROC-AUC:** 0.8014
-- **Top-decile lift:** 3.0x base conversion rate
-- **Calibrated revenue forecast:** $1.97M expected vs $1.74M actual
-- **Overestimation bias:** +13.4% after calibration
-- **Calibration impact:** Average predicted conversion corrected from 35.91% before calibration to 5.14% after calibration, closely matching the actual 5.16% test conversion rate
-- **At-risk opportunity:** 102.9K sessions representing approximately $5.4M in expected revenue
-- **Primary use cases:** promotion targeting, paid media bidding, merchandising prioritization
+This project was built using a synthetic ecommerce dataset structured similarly to a GA4-style event workflow.
 
 ---
 
-## What This Project Does
+## Key Results
 
-This project builds a two-stage session scoring system that assigns:
+| Metric | Result |
+|---|---:|
+| Test ROC-AUC | 0.8014 |
+| Baseline conversion rate | 5.16% |
+| Model top 10% conversion rate | 15.33% |
+| **Top-decile lift** | **3.0x** |
+| Calibrated expected revenue | $1.97M |
+| Actual test revenue | $1.74M |
+| Revenue overestimation after calibration | +13.4% |
+| Average predicted conversion before calibration | 35.91% |
+| Average predicted conversion after calibration | 5.14% |
+| Actual test conversion rate | 5.16% |
 
-- Probability of conversion
-- Predicted spend if the session converts
-- Expected revenue value per session
-
-This enables:
-
-- Identification of high-value users before purchase
-- Targeted intervention on potentially recoverable mid-propensity sessions
-- Smarter allocation of marketing spend
-- Revenue-based prioritization with discount-aware decisioning
-
-The notebook includes full model diagnostics, calibration analysis, SHAP explainability, feature importance, pipeline integrity checks, and implementation details.
+The model is strongest as a **ranking and prioritization tool**. Probability calibration improved its usefulness for revenue planning by reducing overconfident conversion estimates.
 
 ---
 
-## Key Idea
+## Core Idea
 
 > **Expected Revenue = P(Convert) × Predicted Spend**
 
-Rather than optimizing for conversion rate alone, this framework estimates economic value per session.
+Instead of optimizing for conversion rate alone, this framework estimates the economic value of each session.
+
+A session with high purchase probability but low spend may be less valuable than a lower-probability session with much higher expected basket value. The hurdle model combines both signals into one decision-ready metric.
 
 ---
 
-## Why It Matters
+## Why This Project Matters
 
-In most ecommerce funnels:
+In many ecommerce funnels:
 
-- The majority of sessions do not convert
-- Marketing spend is often applied uniformly
+- Most sessions do not convert
+- Marketing spend is often applied too broadly
 - Discounts may be given to users who would have converted anyway
+- High-potential sessions can be missed because they are not ranked by value
 
-This leads to:
+This creates avoidable margin pressure and inefficient campaign spend.
 
-- Missed high-intent opportunities
-- Overspending on low-value traffic
-- Unnecessary margin pressure from poorly targeted promotions
+This framework helps identify:
 
-This framework identifies:
-
-- **Who is likely to convert**
-- **Who is potentially persuadable with intervention**
-- **Who is unlikely to justify spend**
-- **Who should not receive unnecessary discounts**
+- Users likely to convert without an incentive
+- Mid-propensity users who may be worth a targeted nudge
+- Low-propensity sessions where paid remarketing may be inefficient
+- High-value sessions that deserve prioritization
 
 ---
 
 ## Approach
 
-### Stage 1: Conversion Propensity
+### Stage 1: Conversion Propensity Model
 
-- **Model:** XGBoost Classifier
-- **Output:** Probability of purchase
-- **Performance:** Test ROC-AUC of 0.8014 with 3.0x top-decile lift
-- **Selection rationale:** XGBoost provided strong ranking performance, high buyer recall, and SHAP explainability while performing similarly to the strongest baseline models.
+The first stage predicts whether a session will convert.
+
+| Item | Description |
+|---|---|
+| Model | XGBoost Classifier |
+| Target | `is_converted` |
+| Output | Probability of purchase |
+| Test ROC-AUC | 0.8014 |
+| Business use | Rank sessions by likelihood to buy |
+
+The classifier was evaluated against baseline models including Random Forest and Logistic Regression. XGBoost was selected for its strong ranking performance, high buyer recall, and compatibility with SHAP explainability.
+
+---
 
 ### Stage 2: Spend Estimation
 
-- **Method:** Customer-level historical average spend lookup
-- **Design choice:** Session behavior was useful for predicting conversion intent, but customer purchase history was much stronger for estimating spend magnitude.
-- **Insight:** Behaviour predicts intent more reliably than spend amount.
+The second stage estimates how much a user is likely to spend if they convert.
 
-### Final Output
+A key finding from the project:
 
-- Session-level conversion probability
-- Predicted spend estimate
-- Calibrated expected revenue
-- Actionable segmentation for marketing, pricing, and merchandising decisions
+> **Session behaviour predicts intent. Customer history predicts wallet.**
 
----
+In-session behavioural features performed poorly for spend prediction, while customer-level historical spend was much more useful for estimating basket value.
 
-## Revenue Reconciliation
-
-After probability calibration using Platt scaling, the model produced the following held-out estimate:
-
-| Metric | Value |
+| Method | Result |
 |---|---:|
-| Expected revenue calibrated | $1,972,962.80 |
-| Actual revenue | $1,739,605.48 |
-| Overestimation | +$233,357.32 |
-| Overestimation bias (%) | +13.4% |
+| Behavioural XGBoost Regressor | R² ≈ -0.01 |
+| Segment / customer-history spend estimator | R² ≈ 0.65 |
+| Customer-history spend estimator MAE | ≈ $28.57 |
 
-Calibration reduced overconfidence in predicted probabilities while preserving ranking performance. Revenue outputs should be interpreted as planning estimates, not guaranteed outcomes.
-
----
-
-## Business Interpretation
-
-- Useful for ranking sessions and allocating marketing resources under budget constraints
-- Most effective when used to prioritize mid-propensity sessions
-- Helps avoid unnecessary discounts for high-certainty buyers
-- Enables more efficient promotion targeting and budget allocation
-- Spend estimation can be upgraded independently without retraining the full classification system
-- Best used as a prioritization layer within a broader experimentation framework rather than a standalone decision engine
-
-> **Important:** Propensity scores estimate likelihood of purchase, not incremental treatment effect. In production, A/B testing or uplift modeling should be used to measure true intervention impact.
+This supports the final two-stage design: use session behaviour for conversion scoring and customer history for spend estimation.
 
 ---
 
-## Example Model Output Illustrative
+## Final Output
+
+For each session, the pipeline produces:
+
+- Conversion probability
+- Predicted spend
+- Expected revenue
+- Business segment
+- Recommended action
+
+| Segment | Probability Range | Recommended Action |
+|---|---:|---|
+| High Certainty | >80% | Protect margin; avoid unnecessary discounts |
+| At Risk | 40–70% | Consider targeted incentive or cart recovery |
+| Low Interest | <40% | Reduce conversion-focused spend |
+
+Thresholds are heuristic and can be adjusted based on margin, campaign cost, customer lifetime value, and business risk tolerance.
+
+---
+
+## Example Model Output
 
 | Session ID | P(Convert) | Predicted Spend | Expected Revenue | Segment | Recommended Action |
 |---|---:|---:|---:|---|---|
-| S-10492 | 0.86 | $124.50 | $107.07 | High Certainty | Avoid discounting; likely to convert anyway |
-| S-21984 | 0.58 | $96.20 | $55.80 | At Risk | Apply targeted incentive, such as 10 to 15% discount or free shipping |
-| S-33871 | 0.12 | $42.00 | $5.04 | Low Interest | Suppress paid remarketing to reduce wasted spend |
+| S-10492 | 0.86 | $124.50 | $107.07 | High Certainty | Avoid discounting; likely to convert naturally |
+| S-21984 | 0.58 | $96.20 | $55.80 | At Risk | Send targeted incentive or cart recovery message |
+| S-33871 | 0.12 | $42.00 | $5.04 | Low Interest | Suppress paid remarketing or use awareness messaging |
 
 *Illustrative values used to demonstrate the framework.*
 
 ---
 
-## Segmentation Logic
+## Revenue Reconciliation
 
-| Segment | Probability | Recommended Action |
-|---|---|---|
-| **High Certainty** | >80% | Protect margin / avoid unnecessary incentives |
-| **At Risk** | 40 to 70% | Apply targeted incentives to recover demand |
-| **Low Interest** | <40% | Reduce spend / suppress conversion-focused remarketing |
+The original model probabilities were useful for ranking but were not well-calibrated for revenue forecasting. Before calibration, the average predicted conversion rate was much higher than the actual conversion rate.
 
-*Thresholds are heuristic and can be tuned based on margin sensitivity, campaign cost, and business constraints.*
+To correct this, Platt scaling was applied to calibrate predicted probabilities.
 
----
+| Metric | Value |
+|---|---:|
+| Average predicted conversion before calibration | 35.91% |
+| Average predicted conversion after calibration | 5.14% |
+| Actual test conversion rate | 5.16% |
+| Calibrated expected revenue | $1,972,962.80 |
+| Actual test revenue | $1,739,605.48 |
+| Overestimation | +$233,357.32 |
+| Overestimation bias | +13.4% |
 
-## Business Value Analysis
-
-On the held-out test set, the final scoring pipeline produced the following segment-level opportunity view:
-
-| Segment | Sessions | Expected Revenue | Actual Conversion Rate |
-|---|---:|---:|---:|
-| High Certainty >80% | 2,824 | $221,547.41 | 16.8% |
-| At Risk 40 to 70% | 102,930 | $5,402,214.51 | 6.7% |
-| Low Interest <40% | 211,972 | $2,297,951.58 | 0.9% |
-
-The **at-risk segment** represents the largest actionable opportunity because these users show moderate purchase intent but may still need a targeted nudge to convert.
+Calibration reduced overconfidence while preserving ranking performance. Revenue estimates should be interpreted as planning estimates, not guaranteed outcomes.
 
 ---
 
 ## Targeting Lift
 
-The model was evaluated against random targeting on the held-out test set.
+The model was tested against random targeting on the held-out test set.
 
 | Metric | Value |
 |---|---:|
 | Base conversion rate | 5.16% |
 | Random 10% targeting conversion rate | 5.13% |
 | Model top 10% targeting conversion rate | 15.33% |
-| Lift over baseline | 3.0x |
+| **Lift over baseline** | **3.0x** |
 | Expected revenue, model top 10% | $2,953,630.04 |
 | Expected revenue, random 10% | $1,381,257.44 |
-| Revenue lift from model | $1,572,372.60 |
+| Revenue lift from model ranking | $1,572,372.60 |
 
-This shows that the model is strongest as a **ranking and prioritization tool**.
+This shows that the model is most useful as a prioritization layer for marketing, merchandising, and revenue operations.
 
 ---
 
-## Data Structure
+## Business Interpretation
 
-The dataset consists of five relational tables:
+The model can support ecommerce and retail analytics decisions such as:
 
-- `customers`: one row per user
-- `events`: one row per interaction, such as clicks or views
-- `transactions`: one row per completed purchase
-- `products`: one row per product with metadata
-- `campaigns`: marketing campaign attributes
+- Prioritizing sessions for cart recovery campaigns
+- Reducing unnecessary discounts for high-certainty buyers
+- Ranking audiences for paid media retargeting
+- Identifying mid-funnel users who may respond to incentives
+- Supporting merchandising decisions using demand signals
+- Improving campaign budget allocation
 
-Sessions were constructed by aggregating event-level data into session-level features aligned with GA4-style sessionization logic.
+Important note:
+
+> Propensity models estimate likelihood of conversion, not incremental lift.
+
+In production, this type of model should be paired with A/B testing or uplift modeling to measure whether an intervention actually caused additional conversions.
 
 ---
 
@@ -226,31 +224,48 @@ This project was designed to approximate a Google Analytics 4 BigQuery export wo
 | `device_type` | `device.category` |
 | `purchase_amount` | `ecommerce.purchase_revenue` |
 
-While not run on a live GA4 property, the workflow was designed for transferability after validating:
+The dataset is synthetic, but the workflow demonstrates how session-level scoring could be adapted to real GA4-style ecommerce data after validating:
 
 - Event quality
 - Session logic
 - Identity stitching
 - Revenue attribution
 - Leakage safeguards
+- Experimentation design
+
+---
+
+## Data Structure
+
+The dataset contains five relational tables:
+
+| Table | Description |
+|---|---|
+| `customers` | Customer-level attributes |
+| `events` | User interactions such as views, clicks, cart actions, and purchases |
+| `transactions` | Completed purchase records |
+| `products` | Product metadata |
+| `campaigns` | Campaign and channel attributes |
+
+Raw events were aggregated into session-level records using `customer_id` and `session_id`.
 
 ---
 
 ## Leakage Prevention
 
-Because this project uses funnel data, leakage prevention was a major part of the modeling process.
+Because this project uses funnel data, leakage prevention was a major part of the workflow.
 
-The following fields were excluded from the final model:
+The following fields were excluded from the final classification model:
 
 - `event_purchase`
 - `purchase_to_cart_ratio`
 - Non-time-aware spend aggregates
-- Raw funnel event counts that directly reconstructed conversion behavior
+- Raw event counts that directly reconstructed funnel outcomes
 - Target variables such as `is_converted` and `purchase_amount`
 
-The final model avoided suspiciously perfect performance and produced a realistic test ROC-AUC of approximately 0.80.
+An early version of the model produced suspiciously perfect performance, which indicated leakage. After removing leakage-prone features, the final model produced a more realistic test ROC-AUC of approximately 0.80.
 
-> A key lesson from this project: **a perfect model score is often a bug, not a breakthrough.**
+> A perfect model score is often a bug, not a breakthrough.
 
 ---
 
@@ -262,27 +277,31 @@ The final notebook includes:
 - Feature leakage audit
 - Column alignment checks
 - Numeric feature validation
-- Classification metrics
+- Classification model comparison
+- Threshold tuning
 - Regression comparison
 - Propensity decile analysis
 - SHAP explainability
-- Revenue reconciliation
 - Probability calibration using Platt scaling
-- Saved production artifacts
+- Revenue reconciliation
+- Saved model artifacts
 
 ---
 
 ## Production Considerations
 
-In live GA4 data, additional validation would be required for:
+Before deploying this type of model on live ecommerce data, additional validation would be needed for:
 
-- Session fragmentation from timeouts, campaign resets, and cross-device behavior
+- Session fragmentation from timeouts, campaign resets, and cross-device behaviour
 - Event duplication and deduplication logic
 - Attribution windows and revenue crediting
 - Identity stitching across devices and identifiers
 - Product-level margin and discount-cost modeling
+- Time-aware customer history features
 - Incrementality testing through A/B tests or uplift modeling
 - Model drift monitoring after deployment
+
+The current project should be viewed as an analytics case study and prototype, not a ready-to-deploy production system.
 
 ---
 
@@ -290,25 +309,20 @@ In live GA4 data, additional validation would be required for:
 
 **Source:** Marketing & E-Commerce Analytics Dataset from Kaggle
 
+Dataset scale:
+
 - 100,000 customers
 - 2M+ interaction events
 - 5 relational tables
 
-**Note:** This is a synthetic dataset and does not reflect all real-world tracking noise, such as missing events, attribution ambiguity, or inconsistent identity stitching. The raw dataset is too large to store directly in this repository, so it must be downloaded separately and placed in the local `data/` folder to reproduce the notebook.
+The raw dataset is not stored directly in this repository because of file size. To reproduce the notebook, download the dataset separately and place the files in the local `data/` folder.
 
----
+Expected structure:
 
-## Core Insight
-
-> **Clicks signal intent, not wallet.**
-
-Session behaviour predicts **whether** a user will buy.  
-Customer history predicts **how much** they will spend.
-
-Separating these signals improves targeting efficiency, pricing strategy, and marketing ROI.
-
----
-
-## Project Origin
-
-This project originated from coursework in the Data Science & Machine Learning program at Red River College Polytechnic and was expanded into a business-focused analytics case study.
+```text
+data/
+  customers.csv
+  events.csv
+  transactions.csv
+  products.csv
+  campaigns.csv
