@@ -13,7 +13,7 @@
 **Tools:** Python · pandas · NumPy · scikit-learn · XGBoost · SHAP · Matplotlib · Seaborn · Jupyter  
 **Focus:** Ecommerce Analytics · Conversion Propensity · Revenue Forecasting · Promotion Targeting
 
----
+
 
 ## Executive Summary
 
@@ -31,7 +31,6 @@ The final model ranked sessions effectively on a held-out test set. Sessions in 
 
 This project was built using a synthetic ecommerce dataset structured similarly to a GA4-style event workflow.
 
----
 
 ## Key Results
 
@@ -50,7 +49,6 @@ This project was built using a synthetic ecommerce dataset structured similarly 
 
 The model is strongest as a **ranking and prioritization tool**. Probability calibration improved its usefulness for revenue planning by reducing overconfident conversion estimates.
 
----
 
 ## Core Idea
 
@@ -60,7 +58,6 @@ Instead of optimizing for conversion rate alone, this framework estimates the ec
 
 A session with high purchase probability but low spend may be less valuable than a lower-probability session with much higher expected basket value. The hurdle model combines both signals into one decision-ready metric.
 
----
 
 ## Why This Project Matters
 
@@ -80,7 +77,6 @@ This framework helps identify:
 - Low-propensity sessions where paid remarketing may be inefficient
 - High-value sessions that deserve prioritization
 
----
 
 ## Approach
 
@@ -98,7 +94,6 @@ The first stage predicts whether a session will convert.
 
 The classifier was evaluated against baseline models including Random Forest and Logistic Regression. XGBoost was selected for its strong ranking performance, high buyer recall, and compatibility with SHAP explainability.
 
----
 
 ### Stage 2: Spend Estimation
 
@@ -118,7 +113,6 @@ In-session behavioural features performed poorly for spend prediction, while cus
 
 This supports the final two-stage design: use session behaviour for conversion scoring and customer history for spend estimation.
 
----
 
 ## Final Output
 
@@ -138,7 +132,6 @@ For each session, the pipeline produces:
 
 Thresholds are heuristic and can be adjusted based on margin, campaign cost, customer lifetime value, and business risk tolerance.
 
----
 
 ## Example Model Output
 
@@ -150,7 +143,6 @@ Thresholds are heuristic and can be adjusted based on margin, campaign cost, cus
 
 *Illustrative values used to demonstrate the framework.*
 
----
 
 ## Revenue Reconciliation
 
@@ -170,7 +162,6 @@ To correct this, Platt scaling was applied to calibrate predicted probabilities.
 
 Calibration reduced overconfidence while preserving ranking performance. Revenue estimates should be interpreted as planning estimates, not guaranteed outcomes.
 
----
 
 ## Targeting Lift
 
@@ -188,7 +179,6 @@ The model was tested against random targeting on the held-out test set.
 
 This shows that the model is most useful as a prioritization layer for marketing, merchandising, and revenue operations.
 
----
 
 ## Business Interpretation
 
@@ -207,7 +197,6 @@ Important note:
 
 In production, this type of model should be paired with A/B testing or uplift modeling to measure whether an intervention actually caused additional conversions.
 
----
 
 ## GA4 Alignment
 
@@ -233,7 +222,6 @@ The dataset is synthetic, but the workflow demonstrates how session-level scorin
 - Leakage safeguards
 - Experimentation design
 
----
 
 ## Data Structure
 
@@ -249,7 +237,6 @@ The dataset contains five relational tables:
 
 Raw events were aggregated into session-level records using `customer_id` and `session_id`.
 
----
 
 ## Leakage Prevention
 
@@ -267,7 +254,6 @@ An early version of the model produced suspiciously perfect performance, which i
 
 > A perfect model score is often a bug, not a breakthrough.
 
----
 
 ## Model Validation
 
@@ -286,7 +272,6 @@ The final notebook includes:
 - Revenue reconciliation
 - Saved model artifacts
 
----
 
 ## Production Considerations
 
@@ -303,7 +288,6 @@ Before deploying this type of model on live ecommerce data, additional validatio
 
 The current project should be viewed as an analytics case study and prototype, not a ready-to-deploy production system.
 
----
 
 ## Dataset
 
@@ -326,3 +310,23 @@ data/
   transactions.csv
   products.csv
   campaigns.csv
+```
+
+
+## Quick Start
+
+To reproduce this project locally, clone the repository, download the Kaggle dataset, install the required libraries, and run the main notebook.
+
+```bash
+git clone https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4.git
+cd Predictive-Funnel-Analytics-GA4
+pip install -r requirements.txt
+```
+
+Download the Marketing & E-Commerce Analytics Dataset from Kaggle and place the CSV files inside the `data/` folder.
+
+Then open and run:
+
+```text
+notebooks/PFA_GA4.ipynb
+```
