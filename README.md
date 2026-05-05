@@ -52,9 +52,9 @@ The app opens at:
 http://localhost:8501
 ```
 
-![Streamlit App Demo](visualizations/streamlit_app_demo.png)
+![Streamlit App Demo](visualizations/streamlit_app_demo_summary.png)
 
-*Example: session scoring, revenue ranking, and business segmentation in the Streamlit app.*
+*Example: session scoring, revenue prioritization, business segmentation, and recommended actions in the Streamlit app.*
 
 Then:
 
