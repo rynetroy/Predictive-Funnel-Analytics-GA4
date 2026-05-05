@@ -171,7 +171,7 @@ It enables:
 Combining both produces a more complete view of customer value.
 
 
-## 🛠 Project Workflow
+## Project Workflow
 
 ```text
 Raw Data
