@@ -328,5 +328,5 @@ Download the Marketing & E-Commerce Analytics Dataset from Kaggle and place the 
 Then open and run:
 
 ```text
-notebooks/PFA_GA4.ipynb
+notebooks/01_modeling_pfa_ga4.ipynb
 ```
