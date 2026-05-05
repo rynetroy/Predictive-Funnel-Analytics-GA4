@@ -62,6 +62,15 @@ Then:
 - View session scoring, segmentation, and demand signals
 - Download the scored output
 
+### Input Data Requirement
+
+The Streamlit app expects the same feature structure used during model training.
+
+For uploaded data, the file must include the required session-level features listed in:
+
+```text
+models/feature_names.joblib
+```
 
 ### What to Look For
 
