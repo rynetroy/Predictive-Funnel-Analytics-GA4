@@ -43,7 +43,7 @@ def assign_segment(probability):
 
 def assign_business_action(segment):
     actions = {
-        "High Certainty": "Protect margin; avoid unnecessary discounting",
+        "High Certainty": "Protect margin; avoid broad discounting",
         "At-Risk": "Prioritize targeted nudge or selective incentive",
         "Monitor": "Watch for stronger demand signals before intervening",
         "Low Interest": "Deprioritize paid incentive; keep in awareness flow"
@@ -53,7 +53,7 @@ def assign_business_action(segment):
 def assign_demand_signal(probability):
     if probability >= 0.80:
         return "Strong"
-    elif probability >= 0.40:
+    elif probability >= 0.70:
         return "Medium"
     else:
         return "Weak"
@@ -187,10 +187,10 @@ st.subheader("Business Interpretation")
 st.markdown("""
 | Segment | Meaning | Recommended Action |
 |---|---|---|
-| High Certainty | Strong likelihood of purchase | Protect margin; avoid unnecessary discounts |
-| At-Risk | Meaningful intent but not guaranteed | Prioritize targeted nudges or selective incentives |
-| Monitor | Middle-zone behavior | Watch for stronger signals before intervening |
-| Low Interest | Lower immediate purchase likelihood | Deprioritize paid incentives |
+| High Certainty | Top-ranked sessions by predicted conversion probability | Protect margin; avoid broad discounting |
+| At-Risk | Mid-to-high ranked sessions worth prioritizing | Prioritize targeted nudges or selective incentives |
+| Monitor | Middle-zone behavior needing more evidence | Watch for stronger signals before intervening |
+| Low Interest | Lower-ranked sessions with weaker purchase signals | Deprioritize paid incentives |
 """)
 
 st.info(
