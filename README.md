@@ -1,8 +1,8 @@
 ![Predictive Funnel Analytics Banner](visualizations/header.png)
-
 # Predictive Funnel Analytics (PFA-GA4)
-
 ### A Decision System for Session Scoring, Revenue Prioritization & Demand Signals
+
+**Repository:** [Predictive-Funnel-Analytics-GA4](https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4)
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
@@ -44,6 +44,12 @@ Run the Streamlit app locally:
 
 ```bash
 python -m streamlit run app/streamlit_app.py
+```
+
+The app opens at:
+
+```text
+http://localhost:8501
 ```
 
 ![Streamlit App Demo](visualizations/streamlit_app_demo.png)
@@ -238,6 +244,12 @@ Run the app:
 
 ```bash
 python -m streamlit run app/streamlit_app.py
+```
+
+The app opens at:
+
+```text
+http://localhost:8501
 ```
 
 
