@@ -54,6 +54,8 @@ http://localhost:8501
 
 ![Streamlit App Demo](visualizations/streamlit_app_demo.png)
 
+*Example: session scoring, revenue ranking, and business segmentation in the Streamlit app.*
+
 Then:
 
 - Click **Load Sample Data**
@@ -63,9 +65,9 @@ Then:
 
 ### What to Look For
 
-- Clear separation between high-value and low-value sessions
-- Higher conversion concentration in top-ranked groups
-- Model outputs translated into business actions, not just scores
+- Higher conversion concentration in top-ranked sessions
+- Revenue concentrated in top segments
+- Clear mapping from model output to business action
 
 
 ## The Problem
@@ -268,14 +270,14 @@ http://localhost:8501
 
 - This project uses a synthetic GA4-style ecommerce dataset
 - It is designed as a prototype / analytics case study, not a production-ready system
-- Propensity does not equal causality; A/B testing is required to measure true incremental lift
+- This is a ranking and prioritization system. Measuring incremental lift from interventions would be the next phase using A/B testing.
 
 
 ## Production Considerations
 
 Before real deployment, this system would require:
 
-- Validation against real GA4 BigQuery export data
+- Designed to integrate with GA4 BigQuery export data after validation
 - Identity stitching across devices
 - Event quality validation
 - Attribution logic
