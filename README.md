@@ -187,6 +187,15 @@ Top-ranked sessions captured a disproportionate share of expected revenue, showi
 
 ---
 
+## Stakeholder Report
+
+A stakeholder-facing report is included to translate the model results into business recommendations, limitations, and next steps.
+
+```text
+notebooks/predictive-funnel-analytics-GA4-Stakeholder-Report.ipynb
+```
+
+---
 ## How It Works
 
 ### Stage 1 — Conversion Propensity
@@ -321,7 +330,8 @@ Predictive-Funnel-Analytics-GA4/
 │
 ├── notebooks/
 │   ├── 01_modeling_pfa_ga4.ipynb
-│   └── 02_deployment_prep.ipynb
+│   ├── 02_deployment_prep.ipynb
+│   └── predictive-funnel-analytics-GA4-Stakeholder-Report.ipynb
 │
 ├── visualizations/
 │   ├── header.png
