@@ -93,16 +93,18 @@ It translates ecommerce behavior into operational decisions for marketing, prici
 
 ## Key Insights
 
-### 1. High-ranked sessions converted at roughly 3x the baseline rate
+### 1. The model revealed a Pareto-like concentration pattern
 
 The model successfully separated high-intent sessions from general traffic.
 
-The overall conversion rate was **5.16%**, while the top decile converted at **15.33%**.
+The overall conversion rate was **5.16%**, while the highest-ranked 10% of sessions converted at **15.33%**, roughly **3.0x higher** than the baseline rate.
+
+This shows that the conversion opportunity was concentrated in a relatively small group of high-ranked sessions rather than evenly distributed across all traffic.
 
 ![Propensity Decile Analysis](visualizations/propensity_decile.png)
 
 **Business meaning:**  
-Marketing teams can focus campaign spend, retargeting, and recovery actions on sessions with stronger buying signals.
+Marketing teams can prioritize campaign spend, retargeting, and recovery actions toward sessions with stronger buying signals, while avoiding unnecessary incentives for lower-probability traffic.
 
 ---
 
