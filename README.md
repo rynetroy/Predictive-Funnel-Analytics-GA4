@@ -5,6 +5,8 @@
 ### A GA4-Aligned Analytics Project for Session Scoring, Revenue Opportunity, and Marketing Decision Support
 
 **Repository:** [Predictive-Funnel-Analytics-GA4](https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4)
+**Live Demo:** [Launch the PFA-GA4 Streamlit App](https://rynetroy-predictive-funnel-analytics-ga-appstreamlit-app-dcavuj.streamlit.app/)
+
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
