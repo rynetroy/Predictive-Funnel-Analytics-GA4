@@ -1,12 +1,10 @@
 ![Predictive Funnel Analytics Banner](visualizations/header.png)
 
 # Predictive Funnel Analytics for Ecommerce Revenue Prioritization
-
 ### A GA4-Aligned Analytics Project for Session Scoring, Revenue Opportunity, and Marketing Decision Support
 
 **Repository:** [Predictive-Funnel-Analytics-GA4](https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4)
 **Live Demo:** [Launch the PFA-GA4 Streamlit App](https://rynetroy-predictive-funnel-analytics-ga-appstreamlit-app-dcavuj.streamlit.app/)
-
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
@@ -14,33 +12,53 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
 ![Status](https://img.shields.io/badge/Project-v2.0.0-green)
 
-**Author:** Troy Dela Rosa  
-**Tools:** Python · pandas · scikit-learn · XGBoost · SHAP · Streamlit  
-**Focus:** Ecommerce Analytics · Revenue Prioritization · Conversion Propensity · Demand Signals · Retail Decision Support
+**Author:** Troy Dela Rosa
+**Tools:** Python, pandas, scikit-learn, XGBoost, SHAP, Streamlit
+**Dataset:** Synthetic, GA4-structured. See [Data & Scope](#data--scope).
 
 ---
 
-## TL;DR
+## Overview
 
-Built a GA4-style ecommerce scoring system that ranks sessions by **expected revenue**, not just conversion probability.
+Most ecommerce models focus on one question:
 
-The top 10% of scored sessions converted at **15.33%**, roughly **3.0x higher** than the baseline conversion rate of **5.16%**.
+> **Will this customer buy?**
 
-The project shows how behavioral analytics can support **marketing prioritization, margin protection, and revenue-focused decision-making**.
+This project asks a different question:
+
+> **What is this session worth, and what should the business do about it?**
+
+PFA-GA4 uses a two-stage scoring approach:
+
+**Conversion Probability × Predicted Spend = Expected Revenue**
+
+The goal is to rank GA4-style ecommerce sessions by potential value and connect those scores to practical business actions.
+
+The underlying dataset is synthetic. The results in this README demonstrate how the framework works and should not be interpreted as production results. The data structure and scoring approach are designed to map to a real GA4 BigQuery export.
+
+### Results at a Glance
+
+| Metric | Result |
+|---|---:|
+| Baseline conversion rate | 5.16% |
+| Top decile conversion rate | 15.33% |
+| Lift, top decile vs. baseline | 3.0x |
+| ROC-AUC (conversion model) | 0.80 |
+| Calibrated expected revenue (test set) | $1.97M |
+| Actual test-set revenue | $1.74M |
+| Revenue variance after calibration | +13.4% |
+
+![Propensity Decile Analysis](visualizations/propensity_decile.png)
 
 ---
 
 ## Business Context
 
-Ecommerce teams often know how much traffic they receive, but not all traffic deserves the same level of marketing attention.
+Ecommerce teams can see how much traffic they receive, but traffic volume alone does not tell them which sessions deserve attention.
 
-Some sessions may convert without an incentive. Others may need a targeted nudge. Low-intent sessions can consume budget that could be better used elsewhere.
+Some visitors are already highly likely to purchase. Others show some buying intent but may need additional engagement. Some sessions have very little indication of purchase intent.
 
-This project helps answer:
-
-> **Which sessions should marketing, pricing, and ecommerce teams prioritize without wasting discounts on customers who are likely to buy anyway?**
-
-The goal is to connect:
+The goal of this project is to separate those groups and give marketing, pricing, CRM, and analytics teams a way to prioritize sessions based on **expected revenue**, rather than relying only on traffic volume or conversion probability.
 
 ```text
 Behavior → Revenue → Business Action
@@ -48,196 +66,85 @@ Behavior → Revenue → Business Action
 
 ---
 
-## Executive Summary
-
-This project developed a two-stage ecommerce scoring framework that ranks sessions by **expected revenue**.
-
-The model identified a clear concentration of purchase intent in the highest-ranked sessions. While the overall test conversion rate was **5.16%**, the top 10% of scored sessions converted at **15.33%**, representing roughly **3.0x lift over baseline**.
-
-The strongest use case is not simply predicting who will buy. The stronger use case is helping teams decide:
-
-- Which sessions deserve attention
-- Which customers should be protected from unnecessary discounting
-- Which mid-funnel users may respond to selective incentives
-- Which low-intent sessions should be deprioritized
-
-### Key Results Snapshot
-
-| Metric | Result |
-|---|---:|
-| Baseline conversion rate | 5.16% |
-| Top 10% conversion rate | 15.33% |
-| Lift over baseline | 3.0x |
-| ROC-AUC | 0.80 |
-| Calibrated expected revenue | $1.97M |
-| Actual test revenue | $1.74M |
-| Revenue variance | +13.4% over actual |
-
-### Main Business Takeaway
-
-The model is strongest as a **ranking and prioritization layer**.
-
-It translates ecommerce behavior into operational decisions for marketing, pricing, merchandising, and retention teams.
-
----
-
-## North Star Metrics
-
-| Metric Area | Business Question |
-|---|---|
-| Conversion rate | Are sessions turning into purchases? |
-| Propensity lift | Can high-intent sessions be identified earlier? |
-| Expected revenue | Which sessions are likely to be worth the most? |
-| Segment actionability | What should the business do with each scored session? |
-| Calibration accuracy | Can scores be trusted for planning and prioritization? |
-
----
-
 ## Key Insights
 
-### 1. The model revealed a Pareto-like concentration pattern
+### 1. Conversion opportunity is concentrated
 
-The model successfully separated high-intent sessions from general traffic.
+The top 10% of ranked sessions converted at 15.33%, compared with a 5.16% overall conversion rate.
 
-The overall conversion rate was **5.16%**, while the highest-ranked 10% of sessions converted at **15.33%**, roughly **3.0x higher** than the baseline rate.
+That is approximately 3.0x the baseline conversion rate.
 
-This shows that the conversion opportunity was concentrated in a relatively small group of high-ranked sessions rather than evenly distributed across all traffic.
+This suggests that purchase intent is concentrated within a relatively small portion of sessions. Instead of treating every visitor the same, marketing teams could focus attention on the sessions showing the strongest signals.
 
-![Propensity Decile Analysis](visualizations/propensity_decile.png)
+**Business takeaway:** prioritize retargeting and other conversion-focused activity toward higher-value sessions instead of spreading resources evenly across all traffic.
 
-**Business meaning:**  
-Marketing teams can prioritize campaign spend, retargeting, and recovery actions toward sessions with stronger buying signals, while avoiding unnecessary incentives for lower-probability traffic.
+### 2. Conversion probability is not the same as revenue opportunity
 
----
+A session with a high probability of converting is not necessarily the most valuable session.
 
-### 2. Conversion probability alone is not enough for revenue decisions
+For example, a customer with a 70% chance of purchasing a $20 order may be less valuable than a customer with a 50% chance of purchasing a $200 order.
 
-A session with high purchase probability is not always the best revenue opportunity.
-
-This project separates:
-
-- **Session behavior**, which signals purchase intent
-- **Customer history**, which signals wallet potential
-
-Then combines both signals:
+PFA-GA4 combines purchase intent with predicted customer spend:
 
 ```text
-Expected Revenue = Probability of Conversion x Predicted Spend
+Expected Revenue = P(Conversion) × Predicted Spend
 ```
 
-**Business meaning:**  
-The decision shifts from “Who is likely to buy?” to “Which session is worth prioritizing?”
+The conversion model uses session behavior such as pages viewed, session duration, cart activity, traffic source, and funnel stage.
 
----
+Predicted spend comes from customer history, including previous order value, purchase frequency, and recency.
 
-### 3. The most actionable opportunity sits in the middle of the funnel
+This separates two different signals:
 
-High-certainty users may already be likely to convert, so aggressive discounting can reduce margin. Low-interest users may not be worth conversion-focused spend.
+- **Session intent:** what the customer is doing right now
+- **Customer value:** what the customer has historically spent
 
-The strongest opportunity sits in the middle, where users show enough intent to be worth engaging but may still need a nudge.
+**Business takeaway:** ranking sessions by expected revenue can provide a different prioritization than ranking by conversion probability alone.
+
+### 3. The middle of the funnel is the strongest testing opportunity
+
+Sessions with very high purchase probability may not need a discount or additional incentive. Offering a discount to someone who was already likely to buy could simply reduce margin.
+
+At the other end, sessions with very weak signals may not be worth spending additional conversion-focused budget on.
+
+The middle segment is more interesting. These sessions show meaningful intent but are not yet highly committed. They could be candidates for testing actions such as:
+
+- Cart recovery
+- Personalized messaging
+- Limited-time offers
+- Product recommendations
+- Retargeting
+
+The model does not claim that these actions will increase conversion. That would require controlled A/B testing.
 
 ![Revenue Opportunity](visualizations/revenue_opportunity.png)
 
-**Business meaning:**  
-Mid-propensity users are often the best audience for cart recovery, remarketing, limited-time incentives, or personalized offers.
+### 4. Calibration matters before using model scores for planning
 
----
+The raw model probabilities initially overstated expected revenue.
 
-### 4. Calibration made the score more useful for business planning
+After applying Platt scaling, calibrated expected revenue was $1.97M compared with $1.74M in actual test-set revenue.
 
-The initial model was useful for ranking sessions, but its raw probabilities were too high for financial planning.
-
-After probability calibration, expected revenue became more realistic:
+That represents a 13.4% variance.
 
 | Revenue Measure | Amount |
 |---|---:|
 | Calibrated expected revenue | $1.97M |
 | Actual test revenue | $1.74M |
-| Variance | +$233K |
-| Percent variance | +13.4% |
+| Variance | +$233K (+13.4%) |
 
-**Business meaning:**  
-If scores are used for planning or prioritization, calibration helps prevent overconfident revenue estimates.
-
----
-
-## Recommendations
-
-### 1. Protect margin on high-certainty sessions
-
-High-certainty sessions may already be likely to convert, making aggressive discounting potentially margin-destructive.
-
-**Recommended action:**  
-Suppress unnecessary promotions and prioritize non-price messaging such as urgency, reassurance, or product reminders.
-
----
-
-### 2. Prioritize mid-propensity users for targeted intervention
-
-The At-Risk segment shows buying signals but may still need a reason to complete the purchase.
-
-**Recommended action:**  
-Use this group for cart recovery, remarketing, selective incentives, or personalized product messaging.
-
----
-
-### 3. Use expected revenue instead of conversion probability alone
-
-Conversion probability identifies likely buyers. Expected revenue provides a stronger business ranking.
-
-**Recommended action:**  
-Prioritize sessions using expected revenue when budget, incentive cost, or campaign capacity is limited.
-
----
-
-### 4. Extend the framework to margin before production use
-
-Expected revenue should be paired with product margin, discount cost, and campaign cost.
-
-**Recommended action:**  
-Move from expected revenue to expected profit or incremental margin before production deployment.
-
----
-
-### 5. Validate impact through A/B testing
-
-The model identifies where action may be valuable, but it does not prove incremental lift from intervention.
-
-**Recommended action:**  
-Use holdout testing to measure whether targeted actions increase conversion, revenue, or margin.
+Calibration does not make the model perfect, but it provides a more realistic basis for using predicted probabilities in revenue planning and prioritization.
 
 ---
 
 ## Business Segmentation Framework
 
-Each scored session is mapped to a recommended action.
-
 | Segment | Meaning | Recommended Action | Primary Stakeholder |
 |---|---|---|---|
 | High Certainty | Strong likelihood to convert | Protect margin and avoid unnecessary discounts | Marketing, Pricing |
-| At-Risk | Persuadable session with meaningful opportunity | Use selective incentives or recovery messaging | Marketing, CRM |
-| Monitor | Some signal, but not enough for immediate action | Wait for stronger behavior before spending | Digital Analytics |
-| Low Interest | Weak conversion signal | Reduce conversion-focused spend | Paid Media, Growth |
-
----
-
-## Analytical Work Performed
-
-This project combines business analysis, data preparation, machine learning, validation, and deployment.
-
-Key work completed:
-
-- Cleaned and structured event, customer, transaction, product, and campaign data
-- Aggregated ecommerce events into session-level records
-- Engineered behavioral, customer-history, traffic-source, and funnel-stage features
-- Built and compared Logistic Regression, Random Forest, and XGBoost models
-- Selected XGBoost based on ranking performance and buyer identification
-- Separated purchase intent from customer wallet potential
-- Created an expected revenue scoring framework
-- Performed leakage checks, train / validation / test splitting, calibration, and decile lift analysis
-- Used SHAP explainability to interpret model drivers
-- Translated model outputs into business segments and recommended actions
-- Developed a Streamlit app for session scoring and business exploration
+| At-Risk | Moderate intent and strongest testing opportunity | Test selective incentives or recovery messaging | Marketing, CRM |
+| Monitor | Some signal but not yet actionable | Wait for stronger behavioral signals | Digital Analytics |
+| Low Interest | Weak intent and low wallet potential | Reduce conversion-focused ad spend | Paid Media, Growth |
 
 ---
 
@@ -245,183 +152,105 @@ Key work completed:
 
 ### Stage 1: Conversion Propensity
 
-The first stage estimates whether a session is likely to convert.
+An XGBoost classifier predicts the probability that a session will result in a purchase.
 
-- **Model:** XGBoost classifier
-- **Output:** Probability of purchase
-- **Purpose:** Rank sessions by purchase intent
+The model uses session-level behavioral features such as:
+
+- Pages per session
+- Session duration
+- Cart additions
+- Traffic source
+- Funnel stage
+
+XGBoost was compared with Logistic Regression and Random Forest. The final model achieved a test-set ROC-AUC of 0.80 and showed stronger decile ranking performance.
 
 ### Stage 2: Spend Estimation
 
-The second stage estimates how much the customer may spend if they convert.
-
-- Uses customer history instead of only session behavior
-- Estimates expected basket value
-- Separates purchase intent from wallet potential
-
-### Final Output
-
-Each session receives:
-
-- Conversion probability
-- Predicted spend
-- Expected revenue
-- Business segment
-- Recommended action
-
----
-
-## Project Workflow
+The second stage estimates potential customer spend using a customer-level lookup:
 
 ```text
-Raw Data
-  ↓
-Event Aggregation
-  ↓
-Feature Engineering
-  ↓
-Conversion Model
-  ↓
-Spend Estimation
-  ↓
-Expected Revenue
-  ↓
-Business Segmentation
-  ↓
-Recommended Action
-  ↓
-Streamlit App
+models/customer_spend_lookup.csv
 ```
 
-> Suggested visual addition: convert this workflow into a simple architecture diagram and save it as `visualizations/project_workflow.png`.
+The lookup is based on historical customer behavior such as:
 
----
+- Previous order value
+- Purchase frequency
+- Recency
 
-## Stakeholder Use Cases
+This allows the project to separate session intent from customer spending history.
 
-| Stakeholder | How This Project Helps |
-|---|---|
-| Marketing | Prioritize retargeting and cart recovery audiences |
-| Pricing | Avoid unnecessary discounting for high-certainty buyers |
-| Merchandising | Detect product or category demand signals from session behavior |
-| CRM | Identify users who may respond to personalized nudges |
-| Ecommerce Analytics | Build a repeatable scoring layer for session-level decision support |
-| Operations Planning | Use demand signals to support inventory and replenishment awareness |
+### Stage 3: Scoring and Segmentation
 
----
-
-## Streamlit Decision Tool
-
-A Streamlit app was built to make the scoring system easier to explore.
-
-The app allows users to:
-
-- Load sample session data
-- Score sessions by conversion probability
-- Estimate expected revenue
-- Assign business segments
-- Review recommended actions
-- Download scored output for further analysis
-
-![Streamlit App Demo](visualizations/streamlit_app_demo.png)
-
----
-
-## How to Review This Project
-
-You can validate this project through either the scored sample file or the interactive Streamlit app.
-
-### Option 1: Review the scored sample file
-
-Open:
+The two stages are combined to calculate expected revenue:
 
 ```text
-data/processed/scored_sample_sessions.csv
+Expected Revenue = P(Conversion) × Predicted Spend
 ```
 
-Sort by:
+Sessions are then ranked and assigned to one of four business segments based on conversion likelihood and potential customer value.
 
-```text
-expected_revenue
-```
-
-Compare top-ranked sessions against bottom-ranked sessions.
-
-Look for:
-
-- Higher conversion concentration in top-ranked sessions
-- Revenue concentrated in higher-priority segments
-- Clear mapping from model score to recommended business action
-- Difference between purchase intent and predicted spend
-- Impact of calibration on expected revenue planning
-
-### Option 2: Run the Streamlit app
-
-```bash
-python -m streamlit run app/streamlit_app.py
-```
-
-The app opens at:
-
-```text
-http://localhost:8501
-```
-
-Then:
-
-1. Click **Load Sample Data**
-2. View session scoring, segmentation, and demand signals
-3. Compare expected revenue by segment
-4. Download the scored output
+*A direct comparison between expected-revenue ranking and conversion-probability ranking is an important next validation step. This will help determine how much additional ranking value the spend-estimation stage provides.*
 
 ---
 
-## GA4 Alignment
+## Model Validation
 
-This project is built around a GA4-style ecommerce workflow.
+The project includes several validation steps:
 
-| Project Concept | GA4-Style Equivalent |
-|---|---|
-| Event-level user behavior | GA4 event data |
-| Session aggregation | Session-level analytics table |
-| Customer/session identifier | User and session keys |
-| Traffic and campaign signals | Source, medium, campaign fields |
-| Purchase revenue | Ecommerce purchase revenue |
-| Session scoring | Downstream modeling / activation layer |
-
-The dataset is synthetic, but its structure is intended to mirror a workflow that could be adapted to GA4 BigQuery export data after validation.
-
----
-
-## Model Validation Highlights
-
-- Train / validation / test split
-- Leakage detection and removal
-- Model comparison: Logistic Regression, Random Forest, XGBoost
+- Train, validation, and test split
+- Leakage checks before finalizing features
+- Model comparison between Logistic Regression, Random Forest, and XGBoost
 - Probability calibration using Platt scaling
 - Decile lift analysis
 - SHAP explainability
-- Revenue reconciliation
+- Revenue reconciliation against the actual test set
+- Planned comparison of expected-revenue ranking versus conversion-probability ranking
 
 ---
 
-## Input Data Requirement
+## Data & Scope
 
-The Streamlit app expects the same feature set used during model training.
+The dataset is synthetic and structured to resemble a GA4 BigQuery export.
 
-Required features are stored in:
-
-```text
-models/feature_names.joblib
-```
-
-The included sample file is already formatted correctly:
+The intended data flow is:
 
 ```text
-data/processed/scored_sample_sessions.csv
+Event Logs
+    ↓
+Session Aggregation
+    ↓
+User / Session Keys
+    ↓
+Attribution Metrics
+    ↓
+Transaction Value
+    ↓
+Predictive Scoring
 ```
 
-If an uploaded file is missing required columns, the app will stop and show which features are missing.
+This project is a ranking and prioritization prototype. It demonstrates how a scoring framework could work with GA4-style ecommerce data, but it has not been validated against a real GA4 BigQuery export.
+
+There are also several important limitations:
+
+- The dataset is synthetic
+- The model ranks sessions but does not prove causal impact
+- Recommended interventions require A/B testing to measure incremental lift
+- Expected revenue is not the same as expected profit
+- Margin, shipping costs, and discount costs are not currently included
+
+### Before Production Use
+
+A production implementation would need:
+
+- Validation against native GA4 BigQuery event tables
+- Cross-device identity resolution
+- Event quality checks
+- Attribution rules
+- Product margin and discount-cost integration
+- Automated scoring and monitoring
+- Model drift monitoring
+- An experimentation framework to measure incremental lift
 
 ---
 
@@ -460,69 +289,87 @@ Predictive-Funnel-Analytics-GA4/
 
 ---
 
-## Quick Start
+## Try It Yourself
 
-Clone the repository:
+### Option 1: Review the Scored Sample
+
+Open:
+
+```text
+data/processed/scored_sample_sessions.csv
+```
+
+Sort the data by `expected_revenue` and compare the highest- and lowest-ranked sessions.
+
+Look for:
+
+- Conversion probability differences
+- Predicted spend differences
+- Expected revenue differences
+- Conversion concentration among highly ranked sessions
+
+### Option 2: Run the Streamlit App
 
 ```bash
 git clone https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4.git
 cd Predictive-Funnel-Analytics-GA4
-```
-
-Install the required libraries:
-
-```bash
 pip install -r requirements.txt
-```
-
-Run the app:
-
-```bash
 python -m streamlit run app/streamlit_app.py
 ```
 
----
+The app will open at:
 
-## Important Notes
+```text
+http://localhost:8501
+```
 
-- This project uses a synthetic GA4-style ecommerce dataset
-- It is designed as an analytics prototype, not a production-ready system
-- This is a ranking and prioritization system
-- Measuring incremental lift from interventions would require A/B testing
-- Expected revenue should be extended to expected profit before production use
+Load the sample data, review session scoring and segmentation, and download the scored output.
 
----
+The app expects the feature set listed in:
 
-## Production Considerations
+```text
+models/feature_names.joblib
+```
 
-Before real deployment, this system would require:
-
-- GA4 BigQuery export validation
-- Identity stitching across devices
-- Event quality validation
-- Attribution logic
-- Campaign cost integration
-- Product margin and discount-cost logic
-- Model drift monitoring
-- Automated scoring pipeline
-- Experimentation framework for measuring incrementality
+The included sample CSV is already formatted correctly. If you upload your own data, the app will flag any missing required columns.
 
 ---
 
-## Final Takeaway
+## Stakeholder Use Cases
 
-Most junior analytics portfolios stop at charts, notebooks, or model scores.
+| Stakeholder | How This Helps |
+|---|---|
+| Marketing | Prioritize retargeting and cart-recovery audiences by expected value |
+| Pricing | Suppress promotional discounts on high-certainty traffic to protect margin |
+| Merchandising | Surface category demand signals from session behavior |
+| CRM | Identify segments for personalized lifecycle messaging |
+| Ecommerce Analytics | Provide a repeatable scoring layer for session-level decisions |
+| Operations Planning | Provide demand signals that can complement inventory and replenishment planning |
 
-This project is different because it translates analytics into operational decisions.
+---
 
-Most ecommerce models ask:
+## Why This Project Is Different
 
-> “Will this customer buy?”
+Many portfolio projects stop at an AUC score or a confusion matrix.
 
-This project asks:
+PFA-GA4 connects the model to a business decision:
 
-> “What is this session worth, and what should the business do about it?”
+```text
+Probability × Spend
+        ↓
+Expected Revenue
+        ↓
+Session Ranking
+        ↓
+Business Segment
+        ↓
+Recommended Action
+```
 
-By combining conversion probability with spend potential, the project turns behavioral data into a practical decision system for revenue prioritization, marketing efficiency, and margin-aware targeting.
+The goal is not simply to predict who might buy.
+
+It is to help answer:
+
+> Where should the business focus its attention, and why?
 
 **Clicks signal intent. History signals wallet.**
