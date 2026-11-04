@@ -12,13 +12,13 @@
 ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-yellow)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
-![Status](https://img.shields.io/badge/Project-v2.1%20in%20progress-yellow)
+![Status](https://img.shields.io/badge/Project-v2.1-green)
 
 **Author:** Troy Dela Rosa
 **Tools:** Python, pandas, scikit-learn, XGBoost, SHAP, Streamlit
 **Dataset:** Synthetic, GA4-structured ([Marketing & E-Commerce Analytics Dataset](data/README.md)). See [Data & Scope](#data--scope).
 
-> **Status (Nov 2026):** A self-audit found two problems in the revenue stage. The spend estimate averaged each customer's full purchase history, including the purchase being predicted, and the revenue reconciliation matched predictions to the wrong rows. The conversion model and ranking results below are not affected. Revenue and segment figures are being re-validated and will be added back once the corrected notebook is rerun.
+> **Which notebook is the source of record?** Revenue, calibration and segment figures come from the capstone notebook, [`delarosa_troy_SML_model_deployment.ipynb`](notebooks/delarosa_troy_SML_model_deployment.ipynb). A Nov 2026 self-audit of the portfolio notebook (`01_modeling_pfa_ga4.ipynb`) found that its customer-history spend lookup included the purchase being predicted and that its revenue reconciliation matched predictions to the wrong rows, so its revenue cells are not used here. The conversion model and ranking results are the same in both notebooks.
 
 ---
 
@@ -49,8 +49,10 @@ The underlying dataset is synthetic. The results in this README demonstrate how 
 | Top decile conversion rate | 15.33% |
 | Lift, top decile vs. baseline | 3.0x |
 | ROC-AUC (conversion model, test set) | 0.80 |
-| Spend from session behavior (R²) | ≈ −0.01 |
-| Expected revenue vs. actual | Re-validating |
+| Top 20% of sessions, share of revenue | ~55% |
+| Brier score, before → after calibration | 0.130 → 0.046 |
+| Calibrated expected revenue vs. actual (test set) | $1.98M vs $1.74M (+13.6%) |
+| Spend from session behavior (R²) | ≈ 0 |
 
 ![Propensity Decile Analysis](visualizations/propensity_decile.png)
 
@@ -136,22 +138,30 @@ The model does not claim that these actions will increase conversion. That would
 
 The raw XGBoost scores ranked sessions well, but they were not usable as probabilities: they averaged 35.9% against a 5.16% actual conversion rate, which would overstate any revenue plan by several times.
 
-Platt scaling, fit on the validation set, rescales the scores into probabilities without changing the ranking (ROC-AUC stays at 0.80). The calibrated revenue reconciliation is being rerun after the spend and row-alignment fixes described in the status note.
+Platt scaling, fit on the validation set, rescales the scores into probabilities without changing the ranking (ROC-AUC stays at 0.80). On the test set:
+
+| Measure | Before calibration | After Platt scaling |
+|---|---:|---:|
+| Mean predicted conversion | 35.9% | 5.14% (actual 5.16%) |
+| Brier score (lower is better) | 0.130 | 0.046 |
+| Expected revenue vs. $1.74M actual | ≈ $13.7M | $1.98M (+13.6%) |
+
+A naive model that predicts the base rate for everyone scores a Brier of 0.049, so the raw scores were worse than guessing and the calibrated scores are better. The remaining 13.6% overshoot comes from the spend side: the spend estimate predicts close to the average basket, and the training average sits slightly above the test average.
 
 ---
 
 ## Business Segmentation Framework
 
-Sessions are segmented by their rank on calibrated scores. The cut points are a business choice, not a model output.
+Sessions are grouped by their decile on calibrated scores (D10 = highest). The cut points are a business choice, not a model output.
 
-| Segment | Rank on calibrated score | Recommended Action | Primary Stakeholder |
-|---|---|---|---|
-| High Certainty | Top 10% | Protect margin and avoid unnecessary discounts | Marketing, Pricing |
-| At-Risk | 80th to 90th percentile | Test selective incentives or recovery messaging | Marketing, CRM |
-| Monitor | 60th to 80th percentile | Wait for stronger behavioral signals | Digital Analytics |
-| Low Interest | Bottom 60% | Reduce conversion-focused ad spend | Paid Media, Growth |
+| Segment | Deciles | Share of sessions | Actual conversion | Share of revenue | Recommended Action | Primary Stakeholder |
+|---|---|---:|---:|---:|---|---|
+| High Certainty (Protect) | D10 | 10% | 15.4% | ~30% | Protect margin and avoid unnecessary discounts | Marketing, Pricing |
+| At-Risk (Nudge) | D7 to D9 | 30% | 6% to 13% | ~56% | Test selective incentives or recovery messaging | Marketing, CRM |
+| Monitor | D4 to D6 | 27% | 2% to 4% | ~14% | Wait for stronger behavioral signals | Digital Analytics |
+| Low Interest (Brand only) | D1 to D3 | 33% | 0% | 0% | Reduce conversion-focused ad spend | Paid Media, Growth |
 
-*Session counts, actual conversion and expected revenue by segment will be added after the rerun. The current Streamlit demo still uses the earlier fixed-probability thresholds and will be updated to match.*
+*Test set, capstone notebook section 7.4. Revenue by decile is estimated as conversions × the average actual basket. Decile sizes are uneven because many sessions share the same lowest score. The Streamlit demo still uses the earlier fixed-probability thresholds and will be updated to match.*
 
 ---
 
@@ -169,12 +179,14 @@ The model uses 25 features (11 before one-hot encoding) from three families that
 
 ### Stage 2: Spend Estimation
 
-The second stage estimates how much a session is likely to spend if it converts, using each customer's average spend from purchases made **before** the session started. Customers with no purchase history fall back to the average basket of training-set buyers.
+The second stage estimates how much a session is likely to spend if it converts. Two approaches were tested:
 
 | Spend approach | R² | Status |
 |---|---:|---|
-| In-session behavior (Ridge, XGBoost) | ≈ −0.01 | Final |
-| Customer historical average | Re-validating | An earlier version scored R² 0.65, but its average included the purchase being predicted |
+| Session behavior (Linear Regression, Decision Tree, Ridge, XGBoost) | ≈ 0 | Used for the revenue figures (capstone notebook) |
+| Customer historical average | Being corrected | An earlier version scored R² 0.65, but its average included the purchase being predicted |
+
+Because session behavior predicts spend no better than the average basket, the $1.98M figure is effectively calibrated probability × an average basket. A leak-free customer-history estimate (only purchases made before each session) is the planned improvement.
 
 The exported lookup (`models/customer_spend_lookup.csv`) averages all of a customer's past purchases. That is appropriate for scoring new sessions; it is only a problem when used to evaluate past sessions.
 
@@ -199,9 +211,10 @@ Sessions are then ranked and assigned to one of four business segments.
 - Imputers and encoders fit on the training split only
 - Model comparison: Logistic Regression, Random Forest (with and without class balancing), and XGBoost
 - Manual hyperparameter tuning for XGBoost and Random Forest
-- Probability calibration with Platt scaling, fit on validation and evaluated on test
+- Probability calibration with Platt scaling, fit on validation and evaluated on test (Brier score and reliability diagram)
+- Revenue reconciliation: expected vs. actual revenue in total and by decile
 - Decile lift analysis and SHAP explainability, including a review of missed buyers (false negatives)
-- Self-audit (Nov 2026): found spend-lookup leakage and a row-alignment error in revenue reconciliation; fixes in progress
+- Self-audit (Nov 2026): found spend-lookup leakage and a row-alignment error in the portfolio notebook's revenue cells; revenue figures now come from the capstone notebook
 - Planned: compare expected-revenue ranking against conversion-probability ranking
 
 ---
@@ -226,13 +239,13 @@ All four classifiers scored about 0.80. XGBoost was kept for the pipeline, but L
 The first model scored a ROC-AUC of 1.00, which was the signal that features were leaking the answer. Four rounds of removal followed: the purchase event itself, all-time spend aggregates, time-gated spend history, and raw event counts, which reconstructed the funnel in this synthetic dataset. That brought the model to a realistic 0.80. One remaining check: event velocity was calculated from all session events, including the purchase. It is not a top feature, but it will be recalculated without purchase events and the ROC-AUC reported either way.
 
 **Spend from customer history, not session behavior.**
-In-session behavior did not predict basket size at all (R² ≈ −0.01), so spend comes from what a customer has spent before. The first version of this lookup averaged every purchase, including the one being predicted, which made it look far more accurate (R² 0.65) than it can be. The corrected version uses only purchases made before each session.
+In-session behavior did not predict basket size at all (R² ≈ 0), so the better source of spend is what a customer has spent before. The first version of a history lookup averaged every purchase, including the one being predicted, which made it look far more accurate (R² 0.65) than it can be. The published revenue figures use the session-based estimate instead; a leak-free history lookup is the next step.
 
 **Calibrate before planning with the scores.**
-Raw scores averaged 35.9% against 5.16% actual: fine for ranking, misleading for any revenue plan. Platt scaling, fit on the validation set, rescales them without changing the ranking.
+Raw scores averaged 35.9% against 5.16% actual: fine for ranking, misleading for any revenue plan. Platt scaling, fit on the validation set, brought the mean to 5.14% and the Brier score from 0.130 to 0.046, without changing the ranking.
 
 **Segments by rank, not fixed probability cut-offs.**
-After calibration, very few sessions have a conversion probability above 40%, so fixed thresholds like "40 to 70%" would leave most segments empty. Ranking sessions and cutting at percentiles keeps every segment usable, and the cut points can be moved to match a team's capacity or budget.
+After calibration, the highest-scoring sessions sit around 17%, so fixed thresholds like "40 to 70%" would leave every segment empty. Grouping sessions by decile keeps every segment usable, and the cut points can be moved to match a team's capacity or budget.
 
 **Stop at expected revenue, not expected profit.**
 The dataset has no margin, shipping or discount cost, so profit can't be estimated honestly. That is the first change before real use, along with an A/B test, because the model shows where action may pay off but does not prove the action causes extra sales.
@@ -271,7 +284,7 @@ Limitations:
 - Recommended interventions require A/B testing to measure incremental lift
 - Expected revenue is not the same as expected profit
 - Margin, shipping costs, and discount costs are not currently included
-- Customers with no purchase history fall back to an average basket
+- Spend is estimated close to the average basket, which causes the +13.6% revenue overshoot
 - Calibration was fit once and will drift as traffic changes
 - Event velocity currently includes purchase events (fix in progress)
 
@@ -311,7 +324,8 @@ Predictive-Funnel-Analytics-GA4/
 │
 ├── notebooks/
 │   ├── data-audit.ipynb               (ydata-profiling of the raw tables)
-│   ├── 01_modeling_pfa_ga4.ipynb
+│   ├── delarosa_troy_SML_model_deployment.ipynb   (capstone notebook: source of revenue and calibration figures)
+│   ├── 01_modeling_pfa_ga4.ipynb      (portfolio notebook: modeling, leakage audit, SHAP)
 │   └── predictive-funnel-analytics-GA4-Stakeholder-Report.ipynb
 │
 ├── reports/                           (profiling reports per table)
