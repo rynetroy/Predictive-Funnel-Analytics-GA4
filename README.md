@@ -44,6 +44,7 @@ The underlying dataset is synthetic. The results in this README demonstrate how 
 | Top decile conversion rate | 15.33% |
 | Lift, top decile vs. baseline | 3.0x |
 | ROC-AUC (conversion model) | 0.80 |
+| Spend estimator R² (customer history) | 0.65 |
 | Calibrated expected revenue (test set) | $1.97M |
 | Actual test-set revenue | $1.74M |
 | Revenue variance after calibration | +13.4% |
@@ -78,7 +79,7 @@ This suggests that purchase intent is concentrated within a relatively small por
 
 **Business takeaway:** prioritize retargeting and other conversion-focused activity toward higher-value sessions instead of spreading resources evenly across all traffic.
 
-### 2. Conversion probability is not the same as revenue opportunity
+### 2. Clicks signal intent, not wallet
 
 A session with a high probability of converting is not necessarily the most valuable session.
 
@@ -90,9 +91,7 @@ PFA-GA4 combines purchase intent with predicted customer spend:
 Expected Revenue = P(Conversion) × Predicted Spend
 ```
 
-The conversion model uses session behavior such as pages viewed, session duration, cart activity, traffic source, and funnel stage.
-
-Predicted spend comes from customer history, including previous order value, purchase frequency, and recency.
+The key finding: in-session behavior predicts **whether** someone buys, but not **how much** they spend. A spend model built on session behavior had an R² of about −0.01 (no better than guessing the average). A customer's historical average spend reached an R² of about 0.65.
 
 This separates two different signals:
 
@@ -121,19 +120,18 @@ The model does not claim that these actions will increase conversion. That would
 
 ### 4. Calibration matters before using model scores for planning
 
-The raw model probabilities initially overstated expected revenue.
+The raw model ranked sessions well, but its probabilities were far too high: summed expected revenue came to about $13.7M against $1.74M actual.
 
-After applying Platt scaling, calibrated expected revenue was $1.97M compared with $1.74M in actual test-set revenue.
-
-That represents a 13.4% variance.
+After applying Platt scaling, calibrated expected revenue was $1.97M.
 
 | Revenue Measure | Amount |
 |---|---:|
+| Expected revenue before calibration | ≈ $13.7M |
 | Calibrated expected revenue | $1.97M |
 | Actual test revenue | $1.74M |
-| Variance | +$233K (+13.4%) |
+| Variance after calibration | +$233K (+13.4%) |
 
-Calibration does not make the model perfect, but it provides a more realistic basis for using predicted probabilities in revenue planning and prioritization.
+Calibration does not change the ranking (ROC-AUC stays at 0.80), but it makes the probabilities usable for revenue planning and prioritization.
 
 ---
 
@@ -146,6 +144,8 @@ Calibration does not make the model perfect, but it provides a more realistic ba
 | Monitor | Some signal but not yet actionable | Wait for stronger behavioral signals | Digital Analytics |
 | Low Interest | Weak intent and low wallet potential | Reduce conversion-focused ad spend | Paid Media, Growth |
 
+<!-- [CONFIRM] The stakeholder report uses 3 segments (>80%, 40-70%, <40%), which leaves 70-80% unassigned, and this README uses 4. Check which version the Streamlit app uses, whether thresholds apply to calibrated or raw scores, and make the report, app and README match. -->
+
 ---
 
 ## How It Works
@@ -154,31 +154,28 @@ Calibration does not make the model perfect, but it provides a more realistic ba
 
 An XGBoost classifier predicts the probability that a session will result in a purchase.
 
-The model uses session-level behavioral features such as:
+The model uses three feature families that passed the leakage audit:
 
-- Pages per session
-- Session duration
-- Cart additions
-- Traffic source
-- Funnel stage
+- **Behavioral (in-session):** session duration, event velocity, cart-to-view ratio, click-to-view ratio
+- **Customer:** age, loyalty tier, acquisition channel, device type
+- **Campaign:** channel, objective, expected uplift
 
-XGBoost was compared with Logistic Regression and Random Forest. The final model achieved a test-set ROC-AUC of 0.80 and showed stronger decile ranking performance.
+XGBoost was compared with Logistic Regression and Random Forest (balanced). It achieved a test-set ROC-AUC of 0.80 and showed stronger decile ranking performance.
 
 ### Stage 2: Spend Estimation
 
-The second stage estimates potential customer spend using a customer-level lookup:
+The second stage estimates how much a session is likely to spend if it converts, using a customer-level lookup:
 
 ```text
 models/customer_spend_lookup.csv
 ```
 
-The lookup is based on historical customer behavior such as:
+The lookup holds each customer's historical average spend, calculated only from purchases made **before** the session started. Customers with no purchase history fall back to the overall average.
 
-- Previous order value
-- Purchase frequency
-- Recency
-
-This allows the project to separate session intent from customer spending history.
+| Spend approach | R² | MAE |
+|---|---:|---:|
+| In-session behavior | ≈ −0.01 | n/a |
+| Customer historical average | ≈ 0.65 | ≈ $28.57 |
 
 ### Stage 3: Scoring and Segmentation
 
@@ -198,8 +195,10 @@ Sessions are then ranked and assigned to one of four business segments based on 
 
 The project includes several validation steps:
 
-- Train, validation, and test split
-- Leakage checks before finalizing features
+- 60/20/20 train, validation, and test split, performed before any encoding or imputation
+- Leakage audit: an initial ROC-AUC of 1.00 flagged leaking features; four rounds of removal brought it to 0.80
+- Imputers and encoders fit on the training split only
+- Time-aware spend history (only purchases before each session)
 - Model comparison between Logistic Regression, Random Forest, and XGBoost
 - Probability calibration using Platt scaling
 - Decile lift analysis
@@ -216,27 +215,24 @@ Each choice below is one I'd expect to be asked about, so here is the reasoning 
 **Rank by expected revenue, not conversion probability alone.**
 Probability answers "who will buy?" Expected revenue answers "which session is worth acting on?", which is the question a marketing team actually has. Whether this ranking beats probability alone on this data has not been tested yet; that comparison is the next validation step listed above.
 
-**Two stages: session behavior for intent, customer history for spend.**
-What someone does in a session (pages, duration, cart activity, funnel stage) signals how ready they are to buy. What they have spent before signals how much they are likely to spend. Keeping the two separate means each signal can be checked and improved on its own, and the ranking can explain which one drove a score.
+**Two stages, because revenue is mostly zeros.**
+About 95% of sessions generate no revenue, and a few generate a lot. Modeling revenue directly blends two different questions, so the model answers them separately: will this session convert (Stage 1), and if it does, how much (Stage 2). This is known as a hurdle model.
 
 **Judged on ROC-AUC and decile lift, not accuracy.**
 Only 5.16% of test sessions converted. A model that predicts "no purchase" for everyone would be about 95% accurate and useless. ROC-AUC measures how well the model ranks buyers above non-buyers, and decile lift shows whether the top of the ranking really converts more.
 
 **XGBoost over Logistic Regression and Random Forest.**
 All three were compared. XGBoost was selected because it showed the strongest decile ranking and the highest ROC-AUC. Logistic Regression stayed useful as a simple baseline to confirm the extra complexity was worth it.
-<!-- [CONFIRM] Add each model's ROC-AUC from 01_modeling_pfa_ga4.ipynb, e.g. "LogReg 0.XX, RF 0.XX, XGBoost 0.80". -->
+<!-- [CONFIRM] Add each model's ROC-AUC from 01_modeling_pfa_ga4.ipynb, e.g. "LogReg 0.XX, RF 0.XX, XGBoost 0.80", or delete this comment. -->
 
 **Leakage checks before trusting any score.**
-Features that would only be known after a purchase can make a model look excellent in testing and fail in real use. These were checked and removed before finalizing the feature set, and the test set was kept separate from both training and calibration.
-<!-- [CONFIRM] Name the feature(s) removed for leakage and the split ratio (e.g. 70/15/15). -->
+The first model scored a ROC-AUC of 1.00, which was the signal that features were leaking the answer. Four rounds of feature removal brought it to a realistic 0.80. Purchase-event counts are never used as features, the 60/20/20 split happens before any encoding, and imputers and encoders are fit on the training split only.
 
-**Spend history built only from purchases before the session.**
-If the spend lookup included the order from the session being scored, the spend estimate would already "know" the outcome. The lookup has to use only history that existed before each session.
-<!-- [CONFIRM] Check customer_spend_lookup.csv: is it built from pre-session history only? If not, delete this decision and note it as a known limitation instead. -->
+**Spend from customer history, not session behavior.**
+In-session behavior did not predict basket size at all (R² ≈ −0.01). A customer's historical average spend did much better (R² ≈ 0.65, MAE ≈ $28.57). History is built with `merge_asof` so it only counts purchases made strictly before the session starts, which keeps the spend estimate from seeing the outcome.
 
 **Calibrate probabilities with Platt scaling.**
-The raw scores ranked sessions well but overstated probabilities, which would inflate any revenue plan built on them. Platt scaling, fit on the validation set, adjusts the scores to behave like real likelihoods. The result (+13.4% vs actual) is close enough for prioritization, not for a budget forecast.
-<!-- [CONFIRM] If you compared Platt scaling with isotonic regression, say why you picked Platt. -->
+Before calibration, summed expected revenue was about $13.7M against $1.74M actual: fine for ranking, misleading for planning. Platt scaling, fit on the validation set, brought it to $1.97M (+13.4%). That is close enough for prioritization, not for a budget forecast.
 
 **Four action segments instead of one cutoff.**
 A single "buy / won't buy" threshold hides the most useful group: mid-propensity sessions that show intent but may still need a nudge. Four segments give each team a clear action, including the one most models miss: not discounting customers who would buy anyway.
@@ -251,7 +247,7 @@ A synthetic dataset shaped like GA4 event data means the workflow (events to ses
 
 ## Data & Scope
 
-The dataset is synthetic and structured to resemble a GA4 BigQuery export.
+The dataset is synthetic and structured to resemble a GA4 BigQuery export (100K customers, 2M+ events).
 
 The intended data flow is:
 
@@ -278,6 +274,8 @@ There are also several important limitations:
 - Recommended interventions require A/B testing to measure incremental lift
 - Expected revenue is not the same as expected profit
 - Margin, shipping costs, and discount costs are not currently included
+- Customers with no purchase history fall back to the overall average spend
+- Calibration was fit once and will drift as traffic changes
 
 ### Before Production Use
 
@@ -289,7 +287,7 @@ A production implementation would need:
 - Attribution rules
 - Product margin and discount-cost integration
 - Automated scoring and monitoring
-- Model drift monitoring
+- Model drift and calibration monitoring
 - An experimentation framework to measure incremental lift
 
 ---
