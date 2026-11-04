@@ -6,6 +6,8 @@
 **Repository:** [Predictive-Funnel-Analytics-GA4](https://github.com/rynetroy/Predictive-Funnel-Analytics-GA4)
 **Live Demo:** [Launch the PFA-GA4 Streamlit App](https://rynetroy-predictive-funnel-analytics-ga-appstreamlit-app-dcavuj.streamlit.app/)
 
+**Non-technical overview:** [Business Summary](BUSINESS_SUMMARY.md)
+
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![XGBoost](https://img.shields.io/badge/XGBoost-ML-orange)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-yellow)
