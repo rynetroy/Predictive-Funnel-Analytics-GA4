@@ -209,6 +209,46 @@ The project includes several validation steps:
 
 ---
 
+## Design Decisions
+
+Each choice below is one I'd expect to be asked about, so here is the reasoning behind it.
+
+**Rank by expected revenue, not conversion probability alone.**
+Probability answers "who will buy?" Expected revenue answers "which session is worth acting on?", which is the question a marketing team actually has. Whether this ranking beats probability alone on this data has not been tested yet; that comparison is the next validation step listed above.
+
+**Two stages: session behavior for intent, customer history for spend.**
+What someone does in a session (pages, duration, cart activity, funnel stage) signals how ready they are to buy. What they have spent before signals how much they are likely to spend. Keeping the two separate means each signal can be checked and improved on its own, and the ranking can explain which one drove a score.
+
+**Judged on ROC-AUC and decile lift, not accuracy.**
+Only 5.16% of test sessions converted. A model that predicts "no purchase" for everyone would be about 95% accurate and useless. ROC-AUC measures how well the model ranks buyers above non-buyers, and decile lift shows whether the top of the ranking really converts more.
+
+**XGBoost over Logistic Regression and Random Forest.**
+All three were compared. XGBoost was selected because it showed the strongest decile ranking and the highest ROC-AUC. Logistic Regression stayed useful as a simple baseline to confirm the extra complexity was worth it.
+<!-- [CONFIRM] Add each model's ROC-AUC from 01_modeling_pfa_ga4.ipynb, e.g. "LogReg 0.XX, RF 0.XX, XGBoost 0.80". -->
+
+**Leakage checks before trusting any score.**
+Features that would only be known after a purchase can make a model look excellent in testing and fail in real use. These were checked and removed before finalizing the feature set, and the test set was kept separate from both training and calibration.
+<!-- [CONFIRM] Name the feature(s) removed for leakage and the split ratio (e.g. 70/15/15). -->
+
+**Spend history built only from purchases before the session.**
+If the spend lookup included the order from the session being scored, the spend estimate would already "know" the outcome. The lookup has to use only history that existed before each session.
+<!-- [CONFIRM] Check customer_spend_lookup.csv: is it built from pre-session history only? If not, delete this decision and note it as a known limitation instead. -->
+
+**Calibrate probabilities with Platt scaling.**
+The raw scores ranked sessions well but overstated probabilities, which would inflate any revenue plan built on them. Platt scaling, fit on the validation set, adjusts the scores to behave like real likelihoods. The result (+13.4% vs actual) is close enough for prioritization, not for a budget forecast.
+<!-- [CONFIRM] If you compared Platt scaling with isotonic regression, say why you picked Platt. -->
+
+**Four action segments instead of one cutoff.**
+A single "buy / won't buy" threshold hides the most useful group: mid-propensity sessions that show intent but may still need a nudge. Four segments give each team a clear action, including the one most models miss: not discounting customers who would buy anyway.
+
+**Stop at expected revenue, not expected profit.**
+The dataset has no margin, shipping or discount cost, so profit can't be estimated honestly. That is the first change before real use, along with an A/B test, because the model shows where action may pay off but does not prove the action causes extra sales.
+
+**Synthetic data with a GA4 structure.**
+A synthetic dataset shaped like GA4 event data means the workflow (events to sessions to scores) could later be pointed at a real GA4 BigQuery export. The results show the method works on this data; they are not evidence about any real store.
+
+---
+
 ## Data & Scope
 
 The dataset is synthetic and structured to resemble a GA4 BigQuery export.
@@ -348,9 +388,7 @@ The included sample CSV is already formatted correctly. If you upload your own d
 
 ---
 
-## Why This Project Is Different
-
-Many portfolio projects stop at an AUC score or a confusion matrix.
+## From Score to Decision
 
 PFA-GA4 connects the model to a business decision:
 
